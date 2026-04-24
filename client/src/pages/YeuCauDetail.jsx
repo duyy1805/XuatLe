@@ -6,6 +6,7 @@ import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
 import { Skeleton } from '../components/ui/Skeleton';
 import { ArrowLeft, CheckCircle, Send, XCircle, RefreshCw, Box, Calendar, User } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { useConfirm } from '../hooks/useConfirm';
 import yeuCauApi from '../api/yeuCauApi';
@@ -18,6 +19,23 @@ const STATUS_MAP = {
   3: { label: 'Đã tạo lệnh', variant: 'info' },
   7: { label: 'Hoàn thành', variant: 'success' },
   9: { label: 'Đã huỷ', variant: 'danger' }
+};
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.08 }
+  }
+};
+
+const itemVariants = {
+  hidden: { y: 20, opacity: 0 },
+  visible: {
+    y: 0,
+    opacity: 1,
+    transition: { type: 'spring', stiffness: 300, damping: 24 }
+  }
 };
 
 export default function YeuCauDetail() {
@@ -126,9 +144,14 @@ export default function YeuCauDetail() {
   const { header, chiTiet } = data;
 
   return (
-    <div className="flex flex-col gap-6">
+    <motion.div
+      className="flex flex-col gap-6"
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+    >
       {/* Premium Header Layout */}
-      <div className="flex flex-col justify-between gap-4 rounded-2xl border border-white/30 bg-white/70 p-6 backdrop-blur-md md:flex-row md:items-start">
+      <motion.div variants={itemVariants} className="flex flex-col justify-between gap-4 rounded-2xl border border-white/30 bg-white/70 p-6 backdrop-blur-md md:flex-row md:items-start">
         <div>
           <div className="flex items-center gap-3 mb-2">
             <Button variant="outline" size="sm" onClick={() => navigate('/yeu-cau')} className="bg-white">
@@ -187,10 +210,11 @@ export default function YeuCauDetail() {
             </Button>
           )}
         </div>
-      </div>
+      </motion.div>
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        <Card className="xl:col-span-2">
+        <motion.div variants={itemVariants} className="xl:col-span-2">
+        <Card>
           <CardHeader>
             <CardTitle>Danh sách vật tư xuất</CardTitle>
           </CardHeader>
@@ -223,7 +247,9 @@ export default function YeuCauDetail() {
             </TableContainer>
           </CardBody>
         </Card>
+        </motion.div>
 
+        <motion.div variants={itemVariants}>
         <Card className="h-fit">
           <CardHeader>
             <CardTitle>Thông tin chung</CardTitle>
@@ -246,7 +272,8 @@ export default function YeuCauDetail() {
             </div>
           </CardBody>
         </Card>
+        </motion.div>
       </div>
-    </div>
+    </motion.div>
   );
 }

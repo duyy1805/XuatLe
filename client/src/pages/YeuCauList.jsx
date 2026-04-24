@@ -17,7 +17,24 @@ const STATUS_MAP = {
   2: { label: 'Đã duyệt', variant: 'success' },
   3: { label: 'Đã tạo lệnh', variant: 'info' },
   7: { label: 'Hoàn thành', variant: 'success' },
-  9: { label: 'Đã huỷ', variant: 'danger' }
+  9: { label: 'Đã hủy', variant: 'danger' }
+};
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.08 }
+  }
+};
+
+const itemVariants = {
+  hidden: { y: 20, opacity: 0 },
+  visible: {
+    y: 0,
+    opacity: 1,
+    transition: { type: 'spring', stiffness: 300, damping: 24 }
+  }
 };
 
 export default function YeuCauList() {
@@ -43,67 +60,75 @@ export default function YeuCauList() {
   }, []);
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Danh sách yêu cầu xuất lẻ</CardTitle>
-        <Button onClick={() => navigate('/yeu-cau/tao-moi')}>
-          <Plus size={16} /> Tạo mới
-        </Button>
-      </CardHeader>
-      <CardBody>
-        <TableContainer>
-          <Table>
-            <thead>
-              <tr>
-                <th>Mã YC</th>
-                <th>Ngày yêu cầu</th>
-                <th>Công đoạn lẻ</th>
-                <th>Người tạo</th>
-                <th>Trạng thái</th>
-                <th className="text-right">Thao tác</th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? (
-                <TableSkeleton columns={7} rows={5} />
-              ) : list.length === 0 ? (
-                <tr>
-                  <td colSpan="7">
-                    <div className="flex flex-col items-center justify-center py-12 text-slate-500">
-                      <Inbox size={48} className="mb-4 opacity-20" />
-                      <p>Không có dữ liệu yêu cầu nào</p>
-                    </div>
-                  </td>
-                </tr>
-              ) : (
-                list.map((item, index) => (
-                  <motion.tr
-                    key={item.ID_XuatLe_YeuCau}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.05 }}
-                  >
-                    <td className="font-semibold text-blue-600">#{item.ID_XuatLe_YeuCau}</td>
-                    <td>{item.Ngay_YeuCau ? format(new Date(item.Ngay_YeuCau), 'dd/MM/yyyy') : ''}</td>
-                    <td className="font-medium">{item.Ten_CongDoanLe}</td>
-                    <td>{item.TaiKhoan_Lap}</td>
-                    <td>
-                      <Badge variant={STATUS_MAP[item.TrangThai]?.variant || 'neutral'}>
-                        {STATUS_MAP[item.TrangThai]?.label || item.TrangThai}
-                      </Badge>
-                    </td>
-                    <td className="text-right">
-                      <Button variant="secondary" size="sm" onClick={() => navigate(`/yeu-cau/${item.ID_XuatLe_YeuCau}`)}>
-                        <Eye size={14} /> Chi tiết
-                      </Button>
-                    </td>
-                  </motion.tr>
-                ))
-              )}
-            </tbody>
-          </Table>
-        </TableContainer>
-      </CardBody>
-    </Card>
+    <motion.div
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+    >
+      <motion.div variants={itemVariants}>
+        <Card>
+          <CardHeader>
+            <CardTitle>Danh sách yêu cầu xuất lẻ</CardTitle>
+            <Button onClick={() => navigate('/yeu-cau/tao-moi')}>
+              <Plus size={16} /> Tạo mới
+            </Button>
+          </CardHeader>
+          <CardBody>
+            <TableContainer>
+              <Table>
+                <thead>
+                  <tr>
+                    <th>Mã YC</th>
+                    <th>Ngày yêu cầu</th>
+                    <th>Công đoạn lẻ</th>
+                    <th>Người tạo</th>
+                    <th>Trạng thái</th>
+                    <th className="text-right">Thao tác</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {loading ? (
+                    <TableSkeleton columns={7} rows={5} />
+                  ) : list.length === 0 ? (
+                    <tr>
+                      <td colSpan="7">
+                        <div className="flex flex-col items-center justify-center py-12 text-slate-500">
+                          <Inbox size={48} className="mb-4 opacity-20" />
+                          <p>Không có dữ liệu yêu cầu nào</p>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : (
+                    list.map((item, index) => (
+                      <motion.tr
+                        key={item.ID_XuatLe_YeuCau}
+                        initial={{ opacity: 0, y: 12 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ type: 'spring', stiffness: 320, damping: 26, delay: index * 0.035 }}
+                      >
+                        <td className="font-semibold text-blue-600">#{item.ID_XuatLe_YeuCau}</td>
+                        <td>{item.Ngay_YeuCau ? format(new Date(item.Ngay_YeuCau), 'dd/MM/yyyy') : ''}</td>
+                        <td className="font-medium">{item.Ten_CongDoanLe}</td>
+                        <td>{item.TaiKhoan_Lap}</td>
+                        <td>
+                          <Badge variant={STATUS_MAP[item.TrangThai]?.variant || 'neutral'}>
+                            {STATUS_MAP[item.TrangThai]?.label || item.TrangThai}
+                          </Badge>
+                        </td>
+                        <td className="text-right">
+                          <Button variant="secondary" size="sm" onClick={() => navigate(`/yeu-cau/${item.ID_XuatLe_YeuCau}`)}>
+                            <Eye size={14} /> Chi tiết
+                          </Button>
+                        </td>
+                      </motion.tr>
+                    ))
+                  )}
+                </tbody>
+              </Table>
+            </TableContainer>
+          </CardBody>
+        </Card>
+      </motion.div>
+    </motion.div>
   );
 }

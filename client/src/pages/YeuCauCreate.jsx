@@ -6,6 +6,7 @@ import { Input, Select } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
 import { Table, TableContainer } from '../components/ui/Table';
 import { Save, ArrowLeft, PackagePlus, Plus, Trash2 } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import sourceApi from '../api/sourceApi';
 import dmApi from '../api/dmApi';
@@ -18,6 +19,23 @@ const createEmptyRow = () => ({
   SoLuong_DeNghi_Xuat: 0,
   GhiChu_ChiTiet: ''
 });
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.08 }
+  }
+};
+
+const itemVariants = {
+  hidden: { y: 20, opacity: 0 },
+  visible: {
+    y: 0,
+    opacity: 1,
+    transition: { type: 'spring', stiffness: 300, damping: 24 }
+  }
+};
 
 function SearchableSelect({
   value,
@@ -273,8 +291,13 @@ export default function YeuCauCreate() {
   };
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between rounded-2xl border border-white/30 bg-white/70 p-4 backdrop-blur-md">
+    <motion.div
+      className="flex flex-col gap-6"
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+    >
+      <motion.div variants={itemVariants} className="flex items-center justify-between rounded-2xl border border-white/30 bg-white/70 p-4 backdrop-blur-md">
         <div className="flex items-center gap-3">
           <Button variant="outline" size="sm" onClick={() => navigate(-1)} className="bg-white">
             <ArrowLeft size={16} /> Quay lại
@@ -286,9 +309,10 @@ export default function YeuCauCreate() {
         <Button onClick={handleSaveDraft} isLoading={loading} className="px-6 shadow-[0_0_15px_rgba(37,99,235,0.15)]">
           <Save size={16} /> Lưu Nháp
         </Button>
-      </div>
+      </motion.div>
 
       <div className="flex flex-col gap-6">
+        <motion.div variants={itemVariants}>
         <Card>
           <CardHeader>
             <CardTitle>Thông tin chung</CardTitle>
@@ -332,7 +356,9 @@ export default function YeuCauCreate() {
             </div>
           </CardBody>
         </Card>
+        </motion.div>
 
+        <motion.div variants={itemVariants}>
         <Card className="flex flex-col">
             <CardHeader className="flex flex-row items-center justify-between gap-4 border-b pb-4">
               <div>
@@ -372,7 +398,12 @@ export default function YeuCauCreate() {
                         const isLoadingRow = loadingRows[vt.__rowId];
 
                         return (
-                          <tr key={vt.__rowId}>
+                          <motion.tr
+                            key={vt.__rowId}
+                            initial={{ opacity: 0, y: 12 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ type: 'spring', stiffness: 320, damping: 26 }}
+                          >
                             <td className="text-center">
                               <button
                                 onClick={() => handleRemoveVatTu(index)}
@@ -415,7 +446,7 @@ export default function YeuCauCreate() {
                                 disabled={!vt.ID_VatTu}
                               />
                             </td>
-                          </tr>
+                          </motion.tr>
                         );
                       })
                     )}
@@ -424,7 +455,8 @@ export default function YeuCauCreate() {
               </TableContainer>
             </CardBody>
           </Card>
+        </motion.div>
       </div>
-    </div>
+    </motion.div>
   );
 }
