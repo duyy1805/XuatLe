@@ -1,0 +1,115 @@
+### File này dùng chung với VS Code extension REST Client để test API nhanh.
+### Yêu cầu cài extension REST Client: https://marketplace.visualstudio.com/items?itemName=humao.rest-client
+
+@baseUrl = http://localhost:5000/api
+@taiKhoan = 1
+
+### ==========================================================
+### 0. Health check
+### ==========================================================
+GET http://localhost:3000/health
+
+### ==========================================================
+### 1. Danh mục
+### ==========================================================
+
+### Danh sách công đoạn lẻ
+GET {{baseUrl}}/dm/cong-doan-le
+x-tai-khoan: {{taiKhoan}}
+
+### Danh sách kho
+GET {{baseUrl}}/dm/kho
+x-tai-khoan: {{taiKhoan}}
+
+### Danh sách nhà cung cấp
+GET {{baseUrl}}/dm/nha-cung-cap
+x-tai-khoan: {{taiKhoan}}
+
+
+### ==========================================================
+### 2. Dữ liệu nguồn
+### ==========================================================
+
+### Lấy danh sách kế hoạch sản xuất
+GET {{baseUrl}}/source/ke-hoach
+x-tai-khoan: {{taiKhoan}}
+
+### Lấy danh sách vật tư của 1 kế hoạch (Thay idKeHoachSanXuat bằng số ID thực tế có trong DB)
+GET {{baseUrl}}/source/vat-tu?idKeHoachSanXuat=2
+x-tai-khoan: {{taiKhoan}}
+
+
+### ==========================================================
+### 3. Yêu cầu xuất lẻ
+### ==========================================================
+
+### Lấy danh sách yêu cầu
+GET {{baseUrl}}/yeu-cau
+x-tai-khoan: {{taiKhoan}}
+
+### Lấy chi tiết yêu cầu (Thay ID)
+GET {{baseUrl}}/yeu-cau/3
+x-tai-khoan: {{taiKhoan}}
+
+### Lấy lịch sử yêu cầu (Thay ID)
+GET {{baseUrl}}/yeu-cau/3/history
+x-tai-khoan: {{taiKhoan}}
+
+### Tạo mới yêu cầu Draft (Lưu Nháp)
+POST {{baseUrl}}/yeu-cau/draft
+x-tai-khoan: {{taiKhoan}}
+Content-Type: application/json
+
+{
+  "idLenhSanXuat": 6,
+  "idKeHoachSanXuat": 2,
+  "idDonHang": 1,
+  "idDonHangSanPham": 5,
+  "idCongDoanLe": 3,
+  "idBoPhanNguon": 3,
+  "idNhaCungCap": 1,
+  "ngayYeuCau": "2026-04-24",
+  "ngayDuKienXuat": "2026-04-25",
+  "deadlineHoanThanh": "2026-04-30",
+  "ghiChu": "Tạo từ API test file",
+  "chiTiet": [
+    {
+      "idDong": 1,
+      "idDonHangVatTu": 1,
+      "idVatTuXuat": 2,
+      "idVatTuNhap": 2,
+      "idDonViTinh": 7,
+      "soLuongKeHoach": 100,
+      "soLuongDeNghiXuat": 50,
+      "donGiaTamTinh": 0,
+      "ghiChu": "Test chi tiết"
+    }
+  ]
+}
+
+### Trình duyệt yêu cầu (Thay ID bằng ID sinh ra từ bước tạo nháp)
+POST {{baseUrl}}/yeu-cau/4/submit
+x-tai-khoan: {{taiKhoan}}
+
+### Phê duyệt yêu cầu (Thay ID)
+POST {{baseUrl}}/yeu-cau/4/approve
+x-tai-khoan: {{taiKhoan}}
+Content-Type: application/json
+
+{
+  "isApprove": true,
+  "lyDo": "Đã kiểm tra OK"
+}
+
+
+### ==========================================================
+### 4. Báo cáo & Dashboard
+### ==========================================================
+
+### Dashboard
+GET {{baseUrl}}/dashboard
+x-tai-khoan: {{taiKhoan}}
+
+### Báo cáo tồn treo
+GET {{baseUrl}}/report/ton-treo
+x-tai-khoan: {{taiKhoan}}

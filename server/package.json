@@ -1,0 +1,26 @@
+{
+  "name": "xuatle-api-server",
+  "version": "1.0.0",
+  "description": "API Server cho module Xuất Lẻ Công Đoạn Ngoài",
+  "main": "src/app.js",
+  "scripts": {
+    "start": "node src/app.js",
+    "dev": "nodemon src/app.js",
+    "test": "echo \"No tests specified\" && exit 0"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "mssql": "^10.0.1",
+    "dotenv": "^16.3.1",
+    "cors": "^2.8.5",
+    "helmet": "^7.1.0",
+    "morgan": "^1.10.0",
+    "express-validator": "^7.0.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  },
+  "keywords": ["xuatle", "api", "mssql", "nodejs"],
+  "author": "",
+  "license": "ISC"
+}
