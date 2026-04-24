@@ -6,4 +6,4 @@ build/
 *.log
 *.tmp
 *.bak
-*.sql~
+*.sql
