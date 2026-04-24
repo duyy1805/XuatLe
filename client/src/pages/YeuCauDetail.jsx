@@ -5,7 +5,7 @@ import { Table, TableContainer } from '../components/ui/Table';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
 import { Skeleton } from '../components/ui/Skeleton';
-import { ArrowLeft, CheckCircle, Send, XCircle, RefreshCw, Box, Calendar, User, FileText } from 'lucide-react';
+import { ArrowLeft, CheckCircle, Send, XCircle, RefreshCw, Box, Calendar, User } from 'lucide-react';
 import { toast } from 'sonner';
 import { useConfirm } from '../hooks/useConfirm';
 import yeuCauApi from '../api/yeuCauApi';
@@ -116,7 +116,7 @@ export default function YeuCauDetail() {
 
   if (!data || !data.header) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 text-muted">
+      <div className="flex flex-col items-center justify-center py-20 text-slate-500">
         <p>Không tìm thấy dữ liệu yêu cầu</p>
         <Button variant="outline" className="mt-4" onClick={() => navigate('/yeu-cau')}>Quay lại danh sách</Button>
       </div>
@@ -128,7 +128,7 @@ export default function YeuCauDetail() {
   return (
     <div className="flex flex-col gap-6">
       {/* Premium Header Layout */}
-      <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 glass p-6 rounded-[var(--radius-xl)]">
+      <div className="flex flex-col justify-between gap-4 rounded-2xl border border-white/30 bg-white/70 p-6 backdrop-blur-md md:flex-row md:items-start">
         <div>
           <div className="flex items-center gap-3 mb-2">
             <Button variant="outline" size="sm" onClick={() => navigate('/yeu-cau')} className="bg-white">
@@ -138,10 +138,10 @@ export default function YeuCauDetail() {
               {STATUS_MAP[header.TrangThai]?.label || header.TrangThai}
             </Badge>
           </div>
-          <h2 className="text-2xl font-bold tracking-tight text-[var(--text-main)]">
+          <h2 className="text-2xl font-bold tracking-tight text-slate-900">
             Yêu cầu xuất lẻ #{header.ID_XuatLe_YeuCau}
           </h2>
-          <p className="text-muted mt-1 flex items-center gap-2">
+          <p className="mt-1 flex items-center gap-2 text-slate-500">
             <Calendar size={14} /> {header.NgayYeuCau ? format(new Date(header.NgayYeuCau), 'dd/MM/yyyy HH:mm') : ''}
           </p>
         </div>
@@ -182,7 +182,7 @@ export default function YeuCauDetail() {
           )}
 
           {(header.TrangThai === 0 || header.TrangThai === 1) && (
-            <Button variant="outline" className="text-danger hover:bg-[var(--danger-bg)] border-danger" onClick={() => handleAction('cancel', 'Huỷ')} isLoading={actionLoading}>
+            <Button variant="outline" className="border-red-600 text-red-600 hover:bg-red-50" onClick={() => handleAction('cancel', 'Huỷ')} isLoading={actionLoading}>
               Huỷ YC
             </Button>
           )}
@@ -210,12 +210,12 @@ export default function YeuCauDetail() {
                 <tbody>
                   {chiTiet.map((vt) => (
                     <tr key={vt.ID_Dong}>
-                      <td className="font-medium text-[var(--primary)]">{vt.So_LenhSanXuat || '-'}</td>
+                      <td className="font-medium text-blue-600">{vt.So_LenhSanXuat || '-'}</td>
                       <td className="font-semibold">{vt.Ma_VatTu}</td>
                       <td className="text-right">{vt.SoLuong_DeNghi_Xuat}</td>
-                      <td className="text-right text-[var(--primary)] font-medium">{vt.SoLuong_DaXuat}</td>
-                      <td className="text-right text-[var(--success)] font-medium">{vt.SoLuong_DaNhap}</td>
-                      <td className="text-right text-[var(--danger)]">{vt.SoLuong_HaoHut}</td>
+                      <td className="text-right font-medium text-blue-600">{vt.SoLuong_DaXuat}</td>
+                      <td className="text-right font-medium text-emerald-600">{vt.SoLuong_DaNhap}</td>
+                      <td className="text-right text-red-600">{vt.SoLuong_HaoHut}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -230,18 +230,18 @@ export default function YeuCauDetail() {
           </CardHeader>
           <CardBody className="flex flex-col gap-5">
             <div className="flex gap-3">
-              <div className="mt-0.5 text-muted"><Box size={18} /></div>
+              <div className="mt-0.5 text-slate-500"><Box size={18} /></div>
               <div>
-                <div className="text-xs text-muted font-medium uppercase tracking-wider">Công đoạn lẻ</div>
-                <div className="font-semibold text-[var(--text-main)] mt-0.5">{header.Ten_CongDoanLe}</div>
+                <div className="text-xs font-medium uppercase tracking-wider text-slate-500">Công đoạn lẻ</div>
+                <div className="mt-0.5 font-semibold text-slate-900">{header.Ten_CongDoanLe}</div>
               </div>
             </div>
 
             <div className="flex gap-3">
-              <div className="mt-0.5 text-muted"><User size={18} /></div>
+              <div className="mt-0.5 text-slate-500"><User size={18} /></div>
               <div>
-                <div className="text-xs text-muted font-medium uppercase tracking-wider">Người tạo</div>
-                <div className="font-semibold text-[var(--text-main)] mt-0.5">{header.TaiKhoan_Lap}</div>
+                <div className="text-xs font-medium uppercase tracking-wider text-slate-500">Người tạo</div>
+                <div className="mt-0.5 font-semibold text-slate-900">{header.TaiKhoan_Lap}</div>
               </div>
             </div>
           </CardBody>

@@ -3,7 +3,13 @@ import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
-import styles from './Modal.module.css';
+
+const sizes = {
+  sm: 'max-w-[500px]',
+  md: 'max-w-[500px]',
+  lg: 'max-w-[800px]',
+  xl: 'max-w-[1140px]',
+};
 
 export function Modal({ isOpen, onClose, title, children, footer, size = 'md' }) {
   useEffect(() => {
@@ -21,28 +27,28 @@ export function Modal({ isOpen, onClose, title, children, footer, size = 'md' })
 
   return createPortal(
     <AnimatePresence>
-      <div className={styles.overlay} onClick={onClose}>
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={onClose}>
         <motion.div
           initial={{ opacity: 0, scale: 0.95, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
           transition={{ duration: 0.2 }}
-          className={clsx(styles.modal, styles[size])}
+          className={clsx('flex max-h-[90vh] w-full flex-col overflow-hidden rounded-2xl bg-white shadow-lg', sizes[size])}
           onClick={(e) => e.stopPropagation()}
         >
-          <div className={styles.header}>
-            <h2 className={styles.title}>{title}</h2>
-            <button className={styles.closeBtn} onClick={onClose}>
+          <div className="flex items-center justify-between border-b border-slate-100 px-6 py-5">
+            <h2 className="text-xl font-semibold text-slate-900">{title}</h2>
+            <button className="text-slate-500 transition hover:text-slate-900" onClick={onClose}>
               <X size={20} />
             </button>
           </div>
           
-          <div className={styles.body}>
+          <div className="overflow-y-auto p-6">
             {children}
           </div>
 
           {footer && (
-            <div className={styles.footer}>
+            <div className="flex justify-end gap-3 border-t border-slate-100 bg-slate-50 px-6 py-4">
               {footer}
             </div>
           )}

@@ -61,7 +61,7 @@ export function ConfirmProvider({ children }) {
           </>
         }
       >
-        <p className="text-muted">{options.message}</p>
+        <p className="text-slate-500">{options.message}</p>
       </Modal>
     </ConfirmContext.Provider>
   );

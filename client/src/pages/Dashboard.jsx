@@ -31,20 +31,20 @@ function StatCard({ title, value, loading, icon: Icon, colorClass, bgAlphaClass,
         <CardBody className="pt-6 relative z-10">
           <div className="flex justify-between items-start">
             <div>
-              <div className="text-muted text-sm font-medium uppercase tracking-wider">{title}</div>
-              <div className={`text-4xl font-bold mt-2 ${colorClass || 'text-[var(--text-main)]'}`}>
+              <div className="text-sm font-medium uppercase tracking-wider text-slate-500">{title}</div>
+              <div className={`mt-2 text-4xl font-bold ${colorClass || 'text-slate-900'}`}>
                 {loading ? <Skeleton className="h-10 w-20" /> : value}
               </div>
             </div>
-            <div className={`p-3 rounded-2xl ${bgAlphaClass || 'bg-[var(--primary-light)] text-[var(--primary)]'}`}>
+            <div className={`rounded-2xl p-3 ${bgAlphaClass || 'bg-blue-50 text-blue-600'}`}>
               <Icon size={24} />
             </div>
           </div>
           {trend && !loading && (
-            <div className="mt-4 flex items-center gap-1 text-sm font-medium text-success">
+            <div className="mt-4 flex items-center gap-1 text-sm font-medium text-emerald-600">
               <TrendingUp size={16} />
               <span>{trend}</span>
-              <span className="text-muted font-normal ml-1">so với tuần trước</span>
+              <span className="ml-1 font-normal text-slate-500">so với tuần trước</span>
             </div>
           )}
           {loading && (
@@ -54,7 +54,7 @@ function StatCard({ title, value, loading, icon: Icon, colorClass, bgAlphaClass,
           )}
         </CardBody>
         {/* Decorative background icon */}
-        <div className={`absolute -right-6 -bottom-6 opacity-5 group-hover:opacity-10 transition-opacity duration-300 ${colorClass || 'text-[var(--primary)]'}`}>
+        <div className={`absolute -right-6 -bottom-6 opacity-5 transition-opacity duration-300 group-hover:opacity-10 ${colorClass || 'text-blue-600'}`}>
           <Icon size={120} />
         </div>
       </Card>
@@ -96,16 +96,16 @@ export default function Dashboard() {
           loading={loading}
           icon={FileText}
           trend="+12%"
-          colorClass="text-[var(--primary)]"
-          bgAlphaClass="bg-[var(--primary-light)] text-[var(--primary)]"
+          colorClass="text-blue-600"
+          bgAlphaClass="bg-blue-50 text-blue-600"
         />
         <StatCard
           title="Đang chờ duyệt"
           value={data?.DangChoDuyet || 0}
           loading={loading}
           icon={Clock}
-          colorClass="text-[var(--warning)]"
-          bgAlphaClass="bg-[var(--warning-bg)] text-[var(--warning)]"
+          colorClass="text-amber-600"
+          bgAlphaClass="bg-amber-50 text-amber-600"
         />
         <StatCard
           title="Đang xử lý"
@@ -113,16 +113,16 @@ export default function Dashboard() {
           loading={loading}
           icon={Activity}
           trend="+5%"
-          colorClass="text-[var(--info)]"
-          bgAlphaClass="bg-[var(--info-bg)] text-[var(--info)]"
+          colorClass="text-sky-600"
+          bgAlphaClass="bg-sky-50 text-sky-600"
         />
         <StatCard
           title="Quá hạn"
           value={data?.QuaHan || 0}
           loading={loading}
           icon={AlertCircle}
-          colorClass="text-[var(--danger)]"
-          bgAlphaClass="bg-[var(--danger-bg)] text-[var(--danger)]"
+          colorClass="text-red-600"
+          bgAlphaClass="bg-red-50 text-red-600"
         />
       </div>
 
@@ -131,7 +131,7 @@ export default function Dashboard() {
           <Card className="h-full">
             <CardHeader className="pb-2 border-none">
               <div className="flex items-center gap-2">
-                <BarChart2 className="text-primary" size={20} />
+                <BarChart2 className="text-blue-600" size={20} />
                 <CardTitle>Thống kê Yêu cầu theo tuần</CardTitle>
               </div>
             </CardHeader>
@@ -143,13 +143,13 @@ export default function Dashboard() {
                     initial={{ height: 0 }}
                     animate={{ height: `${height}%` }}
                     transition={{ duration: 1, delay: i * 0.1, ease: "easeOut" }}
-                    className="w-full max-w-[48px] bg-[var(--primary-light)] group-hover:bg-[var(--primary)] rounded-t-md transition-colors relative"
+                    className="relative w-full max-w-[48px] rounded-t-md bg-blue-50 transition-colors group-hover:bg-blue-600"
                   >
-                    <div className="absolute -top-8 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-[var(--text-main)] text-white text-xs py-1 px-2 rounded font-medium">
+                    <div className="absolute -top-8 left-1/2 -translate-x-1/2 rounded bg-slate-900 px-2 py-1 text-xs font-medium text-white opacity-0 transition-opacity group-hover:opacity-100">
                       {height * 2}
                     </div>
                   </motion.div>
-                  <div className="text-xs text-muted font-medium">T{i + 2}</div>
+                  <div className="text-xs font-medium text-slate-500">T{i + 2}</div>
                 </div>
               ))}
             </CardBody>
@@ -158,24 +158,24 @@ export default function Dashboard() {
 
         <motion.div variants={itemVariants} className="xl:col-span-1">
           <Card className="h-full">
-            <CardHeader className="pb-4 border-b border-[var(--border-light)]">
+            <CardHeader className="border-b border-slate-100 pb-4">
               <CardTitle className="text-base">Hoạt động gần đây</CardTitle>
             </CardHeader>
             <CardBody className="pt-4">
               <div className="flex flex-col gap-6">
                 {[
-                  { title: 'Tạo mới yêu cầu #YC1002', time: '10 phút trước', icon: Package, color: 'text-primary', bg: 'bg-primary-light' },
-                  { title: 'Phê duyệt yêu cầu #YC0998', time: '1 giờ trước', icon: CheckCircle2, color: 'text-success', bg: 'bg-success-bg' },
-                  { title: 'Hủy yêu cầu #YC0995', time: '3 giờ trước', icon: AlertCircle, color: 'text-danger', bg: 'bg-danger-bg' },
-                  { title: 'Tạo lệnh xuất cho #YC0980', time: 'Hôm qua', icon: Activity, color: 'text-info', bg: 'bg-info-bg' },
+                  { title: 'Tạo mới yêu cầu #YC1002', time: '10 phút trước', icon: Package, color: 'text-blue-600', bg: 'bg-blue-50' },
+                  { title: 'Phê duyệt yêu cầu #YC0998', time: '1 giờ trước', icon: CheckCircle2, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+                  { title: 'Hủy yêu cầu #YC0995', time: '3 giờ trước', icon: AlertCircle, color: 'text-red-600', bg: 'bg-red-50' },
+                  { title: 'Tạo lệnh xuất cho #YC0980', time: 'Hôm qua', icon: Activity, color: 'text-sky-600', bg: 'bg-sky-50' },
                 ].map((act, i) => (
                   <div key={i} className="flex gap-4">
                     <div className={`mt-0.5 w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${act.bg} ${act.color}`}>
                       <act.icon size={16} />
                     </div>
                     <div>
-                      <div className="text-sm font-medium text-[var(--text-main)]">{act.title}</div>
-                      <div className="text-xs text-muted mt-1">{act.time}</div>
+                      <div className="text-sm font-medium text-slate-900">{act.title}</div>
+                      <div className="mt-1 text-xs text-slate-500">{act.time}</div>
                     </div>
                   </div>
                 ))}

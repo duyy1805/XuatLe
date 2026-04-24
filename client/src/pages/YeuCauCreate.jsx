@@ -151,16 +151,16 @@ export default function YeuCauCreate() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between glass p-4 rounded-[var(--radius-xl)]">
+      <div className="flex items-center justify-between rounded-2xl border border-white/30 bg-white/70 p-4 backdrop-blur-md">
         <div className="flex items-center gap-3">
           <Button variant="outline" size="sm" onClick={() => navigate(-1)} className="bg-white">
             <ArrowLeft size={16} /> Quay lại
           </Button>
-          <h2 className="text-xl font-bold tracking-tight text-[var(--text-main)] flex items-center gap-2">
-            <PackagePlus size={20} className="text-primary" /> Tạo Yêu cầu Xuất lẻ (Nhiều Kế hoạch)
+          <h2 className="flex items-center gap-2 text-xl font-bold tracking-tight text-slate-900">
+            <PackagePlus size={20} className="text-blue-600" /> Tạo Yêu cầu Xuất lẻ (Nhiều Kế hoạch)
           </h2>
         </div>
-        <Button onClick={handleSaveDraft} isLoading={loading} className="px-6 shadow-glow">
+        <Button onClick={handleSaveDraft} isLoading={loading} className="px-6 shadow-[0_0_15px_rgba(37,99,235,0.15)]">
           <Save size={16} /> Lưu Nháp
         </Button>
       </div>
@@ -251,7 +251,7 @@ export default function YeuCauCreate() {
                     {dsVatTu.length === 0 ? (
                       <tr>
                         <td colSpan="7">
-                          <div className="flex flex-col items-center justify-center py-20 text-muted">
+                          <div className="flex flex-col items-center justify-center py-20 text-slate-500">
                             <PackagePlus size={48} className="mb-4 opacity-20" />
                             <p>Chưa có vật tư nào. Vui lòng chọn Kế hoạch sản xuất ở trên để thêm.</p>
                           </div>
@@ -263,17 +263,17 @@ export default function YeuCauCreate() {
                           <td className="text-center">
                             <button
                               onClick={() => handleRemoveVatTu(index)}
-                              className="text-muted hover:text-danger p-1 rounded hover:bg-danger-bg transition-colors"
+                              className="rounded p-1 text-slate-500 transition-colors hover:bg-red-50 hover:text-red-600"
                               title="Xóa dòng"
                             >
                               <Trash2 size={16} />
                             </button>
                           </td>
-                          <td className="font-medium text-[var(--primary)] whitespace-nowrap">{vt.So_LenhSanXuat}</td>
+                          <td className="whitespace-nowrap font-medium text-blue-600">{vt.So_LenhSanXuat}</td>
                           <td className="font-semibold whitespace-nowrap">{vt.Ma_VatTu}</td>
                           <td className="truncate max-w-[150px]" title={vt.Ten_VatTu}>{vt.Ten_VatTu}</td>
                           <td className="text-right">{vt.SoLuong_KeHoach}</td>
-                          <td className="text-right font-medium text-success">{vt.SoLuongConLai}</td>
+                          <td className="text-right font-medium text-emerald-600">{vt.SoLuongConLai}</td>
                           <td className="text-right p-2">
                             <Input
                               type="number"

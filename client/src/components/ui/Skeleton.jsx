@@ -1,9 +1,8 @@
 import clsx from 'clsx';
-import styles from './Skeleton.module.css';
 
 export function Skeleton({ className, ...props }) {
   return (
-    <div className={clsx(styles.skeleton, className)} {...props} />
+    <div className={clsx('animate-pulse rounded-lg bg-slate-200', className)} {...props} />
   );
 }
 

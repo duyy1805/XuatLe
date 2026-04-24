@@ -69,7 +69,7 @@ export default function YeuCauList() {
               ) : list.length === 0 ? (
                 <tr>
                   <td colSpan="7">
-                    <div className="flex flex-col items-center justify-center py-12 text-muted">
+                    <div className="flex flex-col items-center justify-center py-12 text-slate-500">
                       <Inbox size={48} className="mb-4 opacity-20" />
                       <p>Không có dữ liệu yêu cầu nào</p>
                     </div>
@@ -83,7 +83,7 @@ export default function YeuCauList() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.05 }}
                   >
-                    <td className="font-semibold text-primary">#{item.ID_XuatLe_YeuCau}</td>
+                    <td className="font-semibold text-blue-600">#{item.ID_XuatLe_YeuCau}</td>
                     <td>{item.Ngay_YeuCau ? format(new Date(item.Ngay_YeuCau), 'dd/MM/yyyy') : ''}</td>
                     <td className="font-medium">{item.Ten_CongDoanLe}</td>
                     <td>{item.TaiKhoan_Lap}</td>
