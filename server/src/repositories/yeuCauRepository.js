@@ -18,8 +18,6 @@ const yeuCauRepository = {
     const req = pool.request();
 
     req.input('ID_XuatLe_YeuCau', sql.BigInt, params.id || null);
-    req.input('ID_KeHoachSanXuat', sql.Int, params.idKeHoachSanXuat || null);
-    req.input('ID_DonHang_SanPham', sql.Int, params.idDonHangSanPham || null);
     req.input('ID_CongDoanLe', sql.Int, params.idCongDoanLe || null);
     req.input('ID_NhaCungCap', sql.SmallInt, params.idNhaCungCap || null);
     req.input('TrangThai', sql.TinyInt, params.trangThai != null ? params.trangThai : null);
@@ -73,11 +71,6 @@ const yeuCauRepository = {
     const req = pool.request();
 
     req.input('ID_XuatLe_YeuCau', sql.BigInt, params.id || null);
-    req.input('ID_LenhSanXuat', sql.Int, params.idLenhSanXuat);
-    req.input('ID_KeHoachSanXuat', sql.Int, params.idKeHoachSanXuat);
-    req.input('ID_DonHang', sql.Int, params.idDonHang);
-    req.input('ID_DonHang_SanPham', sql.Int, params.idDonHangSanPham);
-    req.input('ID_DonHang_LoSanXuat', sql.Int, params.idDonHangLoSanXuat || null);
     req.input('ID_CongDoanLe', sql.Int, params.idCongDoanLe);
     req.input('ID_BoPhan_Nguon', sql.SmallInt, params.idBoPhanNguon);
     req.input('ID_BoPhan_Nhan', sql.SmallInt, params.idBoPhanNhan || null);

@@ -78,10 +78,6 @@ const yeuCauController = {
     try {
       const params = { ...req.body, taiKhoan: req.taiKhoan };
 
-      if (!params.idLenhSanXuat) return sendError(res, 'idLenhSanXuat là bắt buộc.');
-      if (!params.idKeHoachSanXuat) return sendError(res, 'idKeHoachSanXuat là bắt buộc.');
-      if (!params.idDonHang) return sendError(res, 'idDonHang là bắt buộc.');
-      if (!params.idDonHangSanPham) return sendError(res, 'idDonHangSanPham là bắt buộc.');
       if (!params.idCongDoanLe) return sendError(res, 'idCongDoanLe là bắt buộc.');
       if (!params.idBoPhanNguon) return sendError(res, 'idBoPhanNguon là bắt buộc.');
       if (!params.ngayYeuCau) return sendError(res, 'ngayYeuCau là bắt buộc.');
