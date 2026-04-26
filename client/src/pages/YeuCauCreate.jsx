@@ -38,6 +38,7 @@ const itemVariants = {
 };
 
 function SearchableSelect({
+  label,
   value,
   options,
   getValue,
@@ -45,7 +46,8 @@ function SearchableSelect({
   placeholder,
   disabled,
   onChange,
-  className
+  className,
+  wrapperClass
 }) {
   const [query, setQuery] = useState('');
   const [isOpen, setIsOpen] = useState(false);
@@ -89,43 +91,46 @@ function SearchableSelect({
   }, [isOpen, query]);
 
   return (
-    <div className={`relative ${className || ''}`}>
-      <input
-        ref={inputRef}
-        value={displayValue}
-        placeholder={placeholder}
-        disabled={disabled}
-        onFocus={() => setIsOpen(true)}
-        onChange={(event) => {
-          setQuery(event.target.value);
-          setIsOpen(true);
-        }}
-        onBlur={() => window.setTimeout(() => setIsOpen(false), 120)}
-        className="h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-600/10 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400"
-      />
-      {isOpen && !disabled && createPortal(
-        <div
-          style={dropdownStyle}
-          className="z-[9999] max-h-60 overflow-auto rounded-lg border border-slate-200 bg-white py-1 text-sm shadow-xl"
-        >
-          {filteredOptions.length > 0 ? (
-            filteredOptions.map(option => (
-              <button
-                key={getValue(option)}
-                type="button"
-                onMouseDown={(event) => event.preventDefault()}
-                onClick={() => handleSelect(option)}
-                className="block w-full px-3 py-2 text-left text-slate-700 transition hover:bg-blue-50 hover:text-blue-700"
-              >
-                {getLabel(option)}
-              </button>
-            ))
-          ) : (
-            <div className="px-3 py-2 text-slate-500">Không tìm thấy dữ liệu phù hợp</div>
-          )}
-        </div>,
-        document.body
-      )}
+    <div className={['flex flex-col gap-1.5', wrapperClass].filter(Boolean).join(' ')}>
+      {label && <label className="text-sm font-medium text-slate-900">{label}</label>}
+      <div className={`relative ${className || ''}`}>
+        <input
+          ref={inputRef}
+          value={displayValue}
+          placeholder={placeholder}
+          disabled={disabled}
+          onFocus={() => setIsOpen(true)}
+          onChange={(event) => {
+            setQuery(event.target.value);
+            setIsOpen(true);
+          }}
+          onBlur={() => window.setTimeout(() => setIsOpen(false), 120)}
+          className="h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-600/10 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400"
+        />
+        {isOpen && !disabled && createPortal(
+          <div
+            style={dropdownStyle}
+            className="z-[9999] max-h-60 overflow-auto rounded-lg border border-slate-200 bg-white py-1 text-sm shadow-xl"
+          >
+            {filteredOptions.length > 0 ? (
+              filteredOptions.map(option => (
+                <button
+                  key={getValue(option)}
+                  type="button"
+                  onMouseDown={(event) => event.preventDefault()}
+                  onClick={() => handleSelect(option)}
+                  className="block w-full px-3 py-2 text-left text-slate-700 transition hover:bg-blue-50 hover:text-blue-700"
+                >
+                  {getLabel(option)}
+                </button>
+              ))
+            ) : (
+              <div className="px-3 py-2 text-slate-500">Không tìm thấy dữ liệu phù hợp</div>
+            )}
+          </div>,
+          document.body
+        )}
+      </div>
     </div>
   );
 }
@@ -135,6 +140,7 @@ export default function YeuCauCreate() {
   const [loading, setLoading] = useState(false);
   const [dsKeHoach, setDsKeHoach] = useState([]);
   const [dsCongDoan, setDsCongDoan] = useState([]);
+  const [dsNhaCungCap, setDsNhaCungCap] = useState([]);
   const [dsVatTu, setDsVatTu] = useState([]);
   const [vatTuByKeHoach, setVatTuByKeHoach] = useState({});
   const [loadingRows, setLoadingRows] = useState({});
@@ -142,7 +148,7 @@ export default function YeuCauCreate() {
   const [formData, setFormData] = useState({
     idCongDoanLe: '',
     idBoPhanNguon: '3',
-    idNhaCungCap: '1',
+    idNhaCungCap: '',
     ngayYeuCau: new Date().toISOString().slice(0, 10),
     ngayDuKienXuat: '',
     deadlineHoanThanh: '',
@@ -152,10 +158,12 @@ export default function YeuCauCreate() {
   useEffect(() => {
     Promise.all([
       sourceApi.getKeHoach({}),
-      dmApi.getCongDoanLe({})
-    ]).then(([resKh, resCd]) => {
+      dmApi.getCongDoanLe({}),
+      dmApi.getNhaCungCap({})
+    ]).then(([resKh, resCd, resNcc]) => {
       if (resKh.success) setDsKeHoach(resKh.data);
       if (resCd.success) setDsCongDoan(resCd.data);
+      if (resNcc.success) setDsNhaCungCap(resNcc.data);
     }).catch(() => {
       toast.error('Lỗi tải dữ liệu danh mục');
     });
@@ -165,6 +173,10 @@ export default function YeuCauCreate() {
     return [kh.So_LenhSanXuat, kh.Ma_VatTu, kh.Ten_VatTu, `KH#${kh.ID_KeHoachSanXuat}`]
       .filter(Boolean)
       .join(' - ');
+  };
+
+  const getNhaCungCapLabel = (ncc) => {
+    return [ncc.MaSo_NhaCungCap, ncc.Ten_NhaCungCap].filter(Boolean).join(' - ');
   };
 
   const getVatTuLabel = (vt) => {
@@ -203,17 +215,17 @@ export default function YeuCauCreate() {
     setDsVatTu(prev => prev.map((row, rowIndex) => (
       rowIndex === index
         ? {
-            ...createEmptyRow(),
-            __rowId: row.__rowId,
-            ID_KeHoachSanXuat: selectedKh.ID_KeHoachSanXuat,
-            ID_LenhSanXuat: selectedKh.ID_LenhSanXuat,
-            ID_DonHang: selectedKh.ID_DonHang,
-            ID_DonHang_SanPham: selectedKh.ID_DonHang_SanPham,
-            ID_DonHang_LoSanXuat: selectedKh.ID_DonHang_LoSanXuat || null,
-            Ma_VatTu_SP: selectedKh.Ma_VatTu,
-            Ten_VatTu_SP: selectedKh.Ten_VatTu,
-            So_LenhSanXuat: selectedKh.So_LenhSanXuat
-          }
+          ...createEmptyRow(),
+          __rowId: row.__rowId,
+          ID_KeHoachSanXuat: selectedKh.ID_KeHoachSanXuat,
+          ID_LenhSanXuat: selectedKh.ID_LenhSanXuat,
+          ID_DonHang: selectedKh.ID_DonHang,
+          ID_DonHang_SanPham: selectedKh.ID_DonHang_SanPham,
+          ID_DonHang_LoSanXuat: selectedKh.ID_DonHang_LoSanXuat || null,
+          Ma_VatTu_SP: selectedKh.Ma_VatTu,
+          Ten_VatTu_SP: selectedKh.Ten_VatTu,
+          So_LenhSanXuat: selectedKh.So_LenhSanXuat
+        }
         : row
     )));
     await loadVatTuForKeHoach(rowId, selectedKh);
@@ -313,53 +325,73 @@ export default function YeuCauCreate() {
 
       <div className="flex flex-col gap-6">
         <motion.div variants={itemVariants}>
-        <Card>
-          <CardHeader>
-            <CardTitle>Thông tin chung</CardTitle>
-          </CardHeader>
-          <CardBody>
-            <div className="grid grid-cols-1 gap-5 lg:grid-cols-4">
-              <Select
-                label="Công đoạn lẻ (*)"
-                value={formData.idCongDoanLe}
-                onChange={e => setFormData({ ...formData, idCongDoanLe: e.target.value })}
-                wrapperClass="lg:col-span-2"
-              >
-                <option value="">-- Chọn Công đoạn --</option>
-                {dsCongDoan.map(cd => (
-                  <option key={cd.ID_CongDoanLe} value={cd.ID_CongDoanLe}>
-                    {cd.Ma_CongDoanLe} - {cd.Ten_CongDoanLe}
-                  </option>
-                ))}
-              </Select>
+          <Card>
+            <CardHeader>
+              <CardTitle>Thông tin chung</CardTitle>
+            </CardHeader>
+            <CardBody>
+              <div className="grid grid-cols-1 gap-5 lg:grid-cols-6">
+                <Select
+                  label="Công đoạn lẻ (*)"
+                  value={formData.idCongDoanLe}
+                  onChange={e => setFormData({ ...formData, idCongDoanLe: e.target.value })}
+                  wrapperClass="lg:col-span-3"
+                >
+                  <option value="">-- Chọn Công đoạn --</option>
+                  {dsCongDoan.map(cd => (
+                    <option key={cd.ID_CongDoanLe} value={cd.ID_CongDoanLe}>
+                      {cd.Ma_CongDoanLe} - {cd.Ten_CongDoanLe}
+                    </option>
+                  ))}
+                </Select>
 
-              <Input
-                type="date"
-                label="Ngày yêu cầu (*)"
-                value={formData.ngayYeuCau}
-                onChange={e => setFormData({ ...formData, ngayYeuCau: e.target.value })}
-              />
-              <Input
-                type="date"
-                label="Hạn hoàn thành"
-                value={formData.deadlineHoanThanh}
-                onChange={e => setFormData({ ...formData, deadlineHoanThanh: e.target.value })}
-              />
+                <SearchableSelect
+                  label="Nhà cung cấp"
+                  value={formData.idNhaCungCap}
+                  options={dsNhaCungCap}
+                  getValue={ncc => ncc.ID_NhaCungCap}
+                  getLabel={getNhaCungCapLabel}
+                  placeholder="Nhập để tìm nhà cung cấp..."
+                  onChange={ncc => setFormData({ ...formData, idNhaCungCap: ncc.ID_NhaCungCap })}
+                  wrapperClass="lg:col-span-3"
+                />
 
-              <Input
-                label="Ghi chú"
-                value={formData.ghiChu}
-                placeholder="Nhập ghi chú (không bắt buộc)"
-                onChange={e => setFormData({ ...formData, ghiChu: e.target.value })}
-                wrapperClass="lg:col-span-4"
-              />
-            </div>
-          </CardBody>
-        </Card>
+                <Input
+                  type="date"
+                  label="Ngày yêu cầu"
+                  value={formData.ngayYeuCau}
+                  disabled
+                  wrapperClass="lg:col-span-2"
+                />
+                <Input
+                  type="date"
+                  label="Ngày dự kiến xuất"
+                  value={formData.ngayDuKienXuat}
+                  onChange={e => setFormData({ ...formData, ngayDuKienXuat: e.target.value })}
+                  wrapperClass="lg:col-span-2"
+                />
+                <Input
+                  type="date"
+                  label="Hạn hoàn thành"
+                  value={formData.deadlineHoanThanh}
+                  onChange={e => setFormData({ ...formData, deadlineHoanThanh: e.target.value })}
+                  wrapperClass="lg:col-span-2"
+                />
+
+                <Input
+                  label="Ghi chú"
+                  value={formData.ghiChu}
+                  placeholder="Nhập ghi chú (không bắt buộc)"
+                  onChange={e => setFormData({ ...formData, ghiChu: e.target.value })}
+                  wrapperClass="lg:col-span-6"
+                />
+              </div>
+            </CardBody>
+          </Card>
         </motion.div>
 
         <motion.div variants={itemVariants}>
-        <Card className="flex flex-col">
+          <Card className="flex flex-col">
             <CardHeader className="flex flex-row items-center justify-between gap-4 border-b pb-4">
               <div>
                 <CardTitle>Danh sách vật tư đề nghị xuất</CardTitle>

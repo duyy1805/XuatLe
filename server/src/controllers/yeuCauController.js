@@ -1,6 +1,7 @@
 'use strict';
 
 const yeuCauRepo = require('../repositories/yeuCauRepository');
+const lenhXuatRepo = require('../repositories/lenhXuatRepository');
 const { sendSuccess, sendError } = require('../utils/response');
 
 const yeuCauController = {
@@ -22,6 +23,17 @@ const yeuCauController = {
         idKeHoachSanXuat: req.query.idKeHoachSanXuat ? Number(req.query.idKeHoachSanXuat) : null,
         idDonHangSanPham: req.query.idDonHangSanPham ? Number(req.query.idDonHangSanPham) : null,
       };
+
+      // Auto-sync all active requests from ERP before getting list
+      try {
+        await Promise.all([
+          lenhXuatRepo.syncPhieuXuat(null),
+          lenhXuatRepo.syncPhieuNhap(null)
+        ]);
+      } catch (syncErr) {
+        console.error('Global auto-sync failed:', syncErr);
+      }
+
       const data = await yeuCauRepo.getList(params);
       return sendSuccess(res, data);
     } catch (err) {
@@ -39,8 +51,24 @@ const yeuCauController = {
       const id = parseInt(req.params.id, 10);
       if (!id) return sendError(res, 'ID không hợp lệ.');
 
-      const data = await yeuCauRepo.getByID(id);
+      // 1. Fetch to check status
+      let data = await yeuCauRepo.getByID(id);
       if (!data.header) return sendError(res, 'Không tìm thấy yêu cầu.', 404);
+
+      // 2. Auto-sync if status is between 3 (Đã tạo lệnh) and 6
+      if (data.header.TrangThai >= 3 && data.header.TrangThai <= 6) {
+        try {
+          await Promise.all([
+            lenhXuatRepo.syncPhieuXuat(id),
+            lenhXuatRepo.syncPhieuNhap(id)
+          ]);
+          // Fetch again to get updated counts
+          data = await yeuCauRepo.getByID(id);
+        } catch (syncErr) {
+          console.error(`Auto-sync for YC ${id} failed:`, syncErr);
+        }
+      }
+
       return sendSuccess(res, data);
     } catch (err) {
       next(err);

@@ -1,11 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardBody, CardHeader, CardTitle } from '../components/ui/Card';
 import { Table, TableContainer } from '../components/ui/Table';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
 import { Skeleton } from '../components/ui/Skeleton';
-import { ArrowLeft, CheckCircle, Send, XCircle, RefreshCw, Box, Calendar, User } from 'lucide-react';
+import { ArrowLeft, CheckCircle, Send, XCircle, Box, Calendar, User } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { useConfirm } from '../hooks/useConfirm';
@@ -14,9 +14,12 @@ import { format } from 'date-fns';
 
 const STATUS_MAP = {
   0: { label: 'Nháp', variant: 'neutral' },
-  1: { label: 'Chờ duyệt', variant: 'warning' },
-  2: { label: 'Đã duyệt', variant: 'success' },
-  3: { label: 'Đã tạo lệnh', variant: 'info' },
+  1: { label: 'Đang chờ duyệt', variant: 'warning' },
+  2: { label: 'Chờ tạo lệnh ERP', variant: 'info' },
+  3: { label: 'Đang thực hiện', variant: 'primary' },
+  4: { label: 'Đang thực hiện', variant: 'primary' },
+  5: { label: 'Đang thực hiện', variant: 'primary' },
+  6: { label: 'Đang thực hiện', variant: 'primary' },
   7: { label: 'Hoàn thành', variant: 'success' },
   9: { label: 'Đã huỷ', variant: 'danger' }
 };
@@ -47,9 +50,8 @@ export default function YeuCauDetail() {
   const [data, setData] = useState(null);
   const [actionLoading, setActionLoading] = useState(false);
 
-  const fetchDetail = async () => {
+  const fetchDetail = useCallback(async () => {
     try {
-      setLoading(true);
       const res = await yeuCauApi.getById(id);
       if (res.success) {
         setData(res.data);
@@ -60,12 +62,21 @@ export default function YeuCauDetail() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    fetchDetail();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    let ignore = false;
+    async function startFetching() {
+      const res = await yeuCauApi.getById(id);
+      if (!ignore && res.success) {
+        setData(res.data);
+        setLoading(false);
+      }
+    }
+    startFetching();
+    return () => {
+      ignore = true;
+    };
   }, [id]);
 
   const handleAction = async (action, actionName) => {
@@ -98,14 +109,15 @@ export default function YeuCauDetail() {
           res = await yeuCauApi.createLenhXuat(id, {
             idHinhThucXuatVT: 9,
             idKhoXuat: 17,
-            lyDoXuat: 'Xuất theo yêu cầu ' + id
+            idLuongQT: 2,
+            lyDoXuat: 'Xuất theo yêu cầu ' + id,
+            chiTiet: data.chiTiet.map(item => ({
+              ID_DonHang_VatTu: item.ID_DonHang_VatTu,
+              ID_VatTu: item.ID_VatTu,
+              DinhMuc_VatTu: item.DinhMuc_VatTu || 0,
+              SoLuong_VatTu: item.SoLuong_DeNghi_Xuat
+            }))
           });
-          break;
-        case 'syncXuat':
-          res = await yeuCauApi.syncPhieuXuat(id);
-          break;
-        case 'syncNhap':
-          res = await yeuCauApi.syncPhieuNhap(id);
           break;
       }
 
@@ -193,16 +205,6 @@ export default function YeuCauDetail() {
             </Button>
           )}
 
-          {header.TrangThai >= 3 && header.TrangThai <= 6 && (
-            <>
-              <Button variant="secondary" onClick={() => handleAction('syncXuat', 'Đồng bộ Phiếu xuất')} isLoading={actionLoading}>
-                <RefreshCw size={16} /> Sync Phiếu Xuất
-              </Button>
-              <Button variant="secondary" onClick={() => handleAction('syncNhap', 'Đồng bộ Phiếu nhập')} isLoading={actionLoading}>
-                <RefreshCw size={16} /> Sync Phiếu Nhập
-              </Button>
-            </>
-          )}
 
           {(header.TrangThai === 0 || header.TrangThai === 1) && (
             <Button variant="outline" className="border-red-600 text-red-600 hover:bg-red-50" onClick={() => handleAction('cancel', 'Huỷ')} isLoading={actionLoading}>
@@ -214,64 +216,64 @@ export default function YeuCauDetail() {
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         <motion.div variants={itemVariants} className="xl:col-span-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Danh sách vật tư xuất</CardTitle>
-          </CardHeader>
-          <CardBody>
-            <TableContainer>
-              <Table>
-                <thead>
-                  <tr>
-                    <th>Lệnh SX</th>
-                    <th>Mã VT</th>
-                    <th className="text-right">Đề nghị</th>
-                    <th className="text-right">Đã xuất</th>
-                    <th className="text-right">Đã nhập</th>
-                    <th className="text-right">Hao hụt</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {chiTiet.map((vt) => (
-                    <tr key={vt.ID_Dong}>
-                      <td className="font-medium text-blue-600">{vt.So_LenhSanXuat || '-'}</td>
-                      <td className="font-semibold">{vt.Ma_VatTu}</td>
-                      <td className="text-right">{vt.SoLuong_DeNghi_Xuat}</td>
-                      <td className="text-right font-medium text-blue-600">{vt.SoLuong_DaXuat}</td>
-                      <td className="text-right font-medium text-emerald-600">{vt.SoLuong_DaNhap}</td>
-                      <td className="text-right text-red-600">{vt.SoLuong_HaoHut}</td>
+          <Card>
+            <CardHeader>
+              <CardTitle>Danh sách vật tư xuất</CardTitle>
+            </CardHeader>
+            <CardBody>
+              <TableContainer>
+                <Table>
+                  <thead>
+                    <tr>
+                      <th>Lệnh SX</th>
+                      <th>Mã VT</th>
+                      <th className="text-right">Đề nghị</th>
+                      <th className="text-right">Đã xuất</th>
+                      <th className="text-right">Đã nhập</th>
+                      <th className="text-right">Hao hụt</th>
                     </tr>
-                  ))}
-                </tbody>
-              </Table>
-            </TableContainer>
-          </CardBody>
-        </Card>
+                  </thead>
+                  <tbody>
+                    {chiTiet.map((vt) => (
+                      <tr key={vt.ID_Dong}>
+                        <td className="font-medium text-blue-600">{vt.So_LenhSanXuat || '-'}</td>
+                        <td className="font-semibold">{vt.Ma_VatTu}</td>
+                        <td className="text-right">{vt.SoLuong_DeNghi_Xuat}</td>
+                        <td className="text-right font-medium text-blue-600">{vt.SoLuong_DaXuat}</td>
+                        <td className="text-right font-medium text-emerald-600">{vt.SoLuong_DaNhap}</td>
+                        <td className="text-right text-red-600">{vt.SoLuong_HaoHut}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </Table>
+              </TableContainer>
+            </CardBody>
+          </Card>
         </motion.div>
 
         <motion.div variants={itemVariants}>
-        <Card className="h-fit">
-          <CardHeader>
-            <CardTitle>Thông tin chung</CardTitle>
-          </CardHeader>
-          <CardBody className="flex flex-col gap-5">
-            <div className="flex gap-3">
-              <div className="mt-0.5 text-slate-500"><Box size={18} /></div>
-              <div>
-                <div className="text-xs font-medium uppercase tracking-wider text-slate-500">Công đoạn lẻ</div>
-                <div className="mt-0.5 font-semibold text-slate-900">{header.Ten_CongDoanLe}</div>
+          <Card className="h-fit">
+            <CardHeader>
+              <CardTitle>Thông tin chung</CardTitle>
+            </CardHeader>
+            <CardBody className="flex flex-col gap-5">
+              <div className="flex gap-3">
+                <div className="mt-0.5 text-slate-500"><Box size={18} /></div>
+                <div>
+                  <div className="text-xs font-medium uppercase tracking-wider text-slate-500">Công đoạn lẻ</div>
+                  <div className="mt-0.5 font-semibold text-slate-900">{header.Ten_CongDoanLe}</div>
+                </div>
               </div>
-            </div>
 
-            <div className="flex gap-3">
-              <div className="mt-0.5 text-slate-500"><User size={18} /></div>
-              <div>
-                <div className="text-xs font-medium uppercase tracking-wider text-slate-500">Người tạo</div>
-                <div className="mt-0.5 font-semibold text-slate-900">{header.TaiKhoan_Lap}</div>
+              <div className="flex gap-3">
+                <div className="mt-0.5 text-slate-500"><User size={18} /></div>
+                <div>
+                  <div className="text-xs font-medium uppercase tracking-wider text-slate-500">Người tạo</div>
+                  <div className="mt-0.5 font-semibold text-slate-900">{header.TaiKhoan_Lap}</div>
+                </div>
               </div>
-            </div>
-          </CardBody>
-        </Card>
+            </CardBody>
+          </Card>
         </motion.div>
       </div>
     </motion.div>

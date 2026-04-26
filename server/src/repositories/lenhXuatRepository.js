@@ -19,12 +19,14 @@ const lenhXuatRepository = {
     req.input('ID_XuatLe_YeuCau', sql.BigInt, params.idYeuCau);
     req.input('ID_HinhThucXuatVT', sql.TinyInt, params.idHinhThucXuatVT);
     req.input('ID_KhoXuat', sql.SmallInt, params.idKhoXuat);
+    req.input('ID_LuongQT', sql.SmallInt, params.idLuongQT || 2);
     req.input('ID_KhoNhap', sql.SmallInt, params.idKhoNhap || null);
     req.input('NguoiNhanHang', sql.NVarChar(255), params.nguoiNhanHang || null);
     req.input('NoiDen', sql.NVarChar(255), params.noiDen || null);
     req.input('LyDoXuat', sql.NVarChar(255), params.lyDoXuat || null);
     req.input('GhiChu', sql.NVarChar(500), params.ghiChu || null);
     req.input('TaiKhoan', sql.SmallInt, params.taiKhoan);
+    req.input('ChiTietJson', sql.NVarChar(sql.MAX), JSON.stringify(params.chiTiet || []));
 
     const result = await req.execute('dbo.usp_XuatLe_CreateLenhXuatVT');
     return result.recordset[0];

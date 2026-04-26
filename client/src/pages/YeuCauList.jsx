@@ -13,9 +13,12 @@ import { format } from 'date-fns';
 
 const STATUS_MAP = {
   0: { label: 'Nháp', variant: 'neutral' },
-  1: { label: 'Chờ duyệt', variant: 'warning' },
-  2: { label: 'Đã duyệt', variant: 'success' },
-  3: { label: 'Đã tạo lệnh', variant: 'info' },
+  1: { label: 'Đang chờ duyệt', variant: 'warning' },
+  2: { label: 'Chờ tạo lệnh ERP', variant: 'info' },
+  3: { label: 'Đang thực hiện', variant: 'primary' },
+  4: { label: 'Đang thực hiện', variant: 'primary' },
+  5: { label: 'Đang thực hiện', variant: 'primary' },
+  6: { label: 'Đang thực hiện', variant: 'primary' },
   7: { label: 'Hoàn thành', variant: 'success' },
   9: { label: 'Đã hủy', variant: 'danger' }
 };
@@ -82,6 +85,7 @@ export default function YeuCauList() {
                     <th>Ngày yêu cầu</th>
                     <th>Công đoạn lẻ</th>
                     <th>Người tạo</th>
+                    <th>Tiến độ (Xuất/Nhập)</th>
                     <th>Trạng thái</th>
                     <th className="text-right">Thao tác</th>
                   </tr>
@@ -111,8 +115,24 @@ export default function YeuCauList() {
                         <td className="font-medium">{item.Ten_CongDoanLe}</td>
                         <td>{item.TaiKhoan_Lap}</td>
                         <td>
+                          <div className="flex items-center gap-4">
+                            <div className="flex flex-col gap-1 min-w-[100px]">
+                              <div className="flex justify-between text-[10px] font-medium uppercase text-slate-500">
+                                <span>Xuất: {item.SoLuong_DaXuat || 0}</span>
+                                <span>Nhập: {item.SoLuong_DaNhap || 0}</span>
+                              </div>
+                              <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
+                                <div
+                                  className="h-full bg-blue-500 transition-all duration-500"
+                                  style={{ width: `${Math.min(((item.SoLuong_DaXuat || 0) / (item.SoLuong_DeNghi || 1)) * 100, 100)}%` }}
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+                        <td>
                           <Badge variant={STATUS_MAP[item.TrangThai]?.variant || 'neutral'}>
-                            {STATUS_MAP[item.TrangThai]?.label || item.TrangThai}
+                            {STATUS_MAP[item.TrangThai]?.label || `Trạng thái ${item.TrangThai}`}
                           </Badge>
                         </td>
                         <td className="text-right">
