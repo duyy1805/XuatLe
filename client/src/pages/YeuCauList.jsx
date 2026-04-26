@@ -1,11 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardBody, CardHeader, CardTitle } from '../components/ui/Card';
 import { Table, TableContainer } from '../components/ui/Table';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
 import { TableSkeleton } from '../components/ui/Skeleton';
-import { Plus, Eye, Inbox } from 'lucide-react';
+import { Plus, Eye, Inbox, Search, Filter, RotateCcw } from 'lucide-react';
+import { Input, Select } from '../components/ui/Input';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import yeuCauApi from '../api/yeuCauApi';
@@ -15,11 +16,12 @@ const STATUS_MAP = {
   0: { label: 'Nháp', variant: 'neutral' },
   1: { label: 'Đang chờ duyệt', variant: 'warning' },
   2: { label: 'Chờ tạo lệnh ERP', variant: 'info' },
-  3: { label: 'Đang thực hiện', variant: 'primary' },
-  4: { label: 'Đang thực hiện', variant: 'primary' },
-  5: { label: 'Đang thực hiện', variant: 'primary' },
-  6: { label: 'Đang thực hiện', variant: 'primary' },
+  3: { label: 'Đã tạo lệnh ERP', variant: 'primary' },
+  4: { label: 'Đang xuất kho', variant: 'primary' },
+  5: { label: 'Đã xuất đủ', variant: 'primary' },
+  6: { label: 'Đang nhập lại', variant: 'primary' },
   7: { label: 'Hoàn thành', variant: 'success' },
+  8: { label: 'Quá hạn', variant: 'danger' },
   9: { label: 'Đã hủy', variant: 'danger' }
 };
 
@@ -43,24 +45,74 @@ const itemVariants = {
 export default function YeuCauList() {
   const [list, setList] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [filters, setFilters] = useState({
+    keyword: '',
+    trangThai: '',
+    tuNgay: '',
+    denNgay: ''
+  });
   const navigate = useNavigate();
 
+  const fetchList = useCallback(async (isInitial = false) => {
+    try {
+      if (!isInitial) setLoading(true);
+      const params = {
+        keyword: filters.keyword || null,
+        trangThai: filters.trangThai !== '' ? Number(filters.trangThai) : null,
+        tuNgay: filters.tuNgay || null,
+        denNgay: filters.denNgay || null
+      };
+      const res = await yeuCauApi.getList(params);
+      if (res.success) {
+        setList(res.data);
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error('Không thể tải danh sách yêu cầu');
+    } finally {
+      setLoading(false);
+    }
+  }, [filters]);
+
   useEffect(() => {
-    async function fetchList() {
-      try {
-        const res = await yeuCauApi.getList({});
-        if (res.success) {
-          setList(res.data);
-        }
-      } catch (error) {
-        console.error(error);
-        toast.error('Không thể tải danh sách yêu cầu');
-      } finally {
+    let ignore = false;
+    async function startFetching() {
+      const res = await yeuCauApi.getList({});
+      if (!ignore && res.success) {
+        setList(res.data);
         setLoading(false);
       }
     }
-    fetchList();
+    startFetching();
+    return () => {
+      ignore = true;
+    };
   }, []);
+
+  const handleFilterChange = (e) => {
+    const { name, value } = e.target;
+    setFilters(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    fetchList();
+  };
+
+  const handleReset = () => {
+    const defaultFilters = {
+      keyword: '',
+      trangThai: '',
+      tuNgay: '',
+      denNgay: ''
+    };
+    setFilters(defaultFilters);
+    setLoading(true);
+    yeuCauApi.getList({}).then(res => {
+      if (res.success) setList(res.data);
+      setLoading(false);
+    });
+  };
 
   return (
     <motion.div
@@ -71,12 +123,72 @@ export default function YeuCauList() {
       <motion.div variants={itemVariants}>
         <Card>
           <CardHeader>
-            <CardTitle>Danh sách yêu cầu xuất lẻ</CardTitle>
+            <div className="flex flex-col gap-1">
+              <CardTitle>Danh sách yêu cầu xuất lẻ</CardTitle>
+              <p className="text-sm text-slate-500">Theo dõi tiến độ xuất nhập vật tư lẻ</p>
+            </div>
             <Button onClick={() => navigate('/yeu-cau/tao-moi')}>
               <Plus size={16} /> Tạo mới
             </Button>
           </CardHeader>
-          <CardBody>
+          <CardBody className="flex flex-col gap-6">
+            {/* Filter Section */}
+            <form onSubmit={handleSearch} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 rounded-xl border border-slate-100 bg-slate-50/50 p-4">
+              <Input
+                label="Tìm kiếm"
+                placeholder="Mã yêu cầu..."
+                name="keyword"
+                value={filters.keyword}
+                onChange={handleFilterChange}
+                className="bg-white"
+              />
+              <Select
+                label="Trạng thái"
+                name="trangThai"
+                value={filters.trangThai}
+                onChange={handleFilterChange}
+                className="bg-white"
+              >
+                <option value="">Tất cả</option>
+                <option value="0">Nháp</option>
+                <option value="1">Đang chờ duyệt</option>
+                <option value="2">Chờ tạo lệnh ERP</option>
+                <option value="3">Đã tạo lệnh ERP</option>
+                <option value="4">Đang xuất kho</option>
+                <option value="5">Đã xuất đủ</option>
+                <option value="6">Đang nhập lại</option>
+                <option value="7">Hoàn thành</option>
+                <option value="8">Quá hạn</option>
+                <option value="9">Đã hủy</option>
+              </Select>
+              <Input
+                type="date"
+                label="Từ ngày"
+                name="tuNgay"
+                value={filters.tuNgay}
+                onChange={handleFilterChange}
+                className="bg-white"
+                wrapperClass="gap-1"
+              />
+              <Input
+                type="date"
+                label="Đến ngày"
+                name="denNgay"
+                value={filters.denNgay}
+                onChange={handleFilterChange}
+                className="bg-white"
+                wrapperClass="gap-1"
+              />
+              <div className="flex items-end gap-2 pb-0.5">
+                <Button type="submit" className="flex-1 h-[42px]">
+                  <Search size={16} /> Tìm
+                </Button>
+                <Button type="button" variant="outline" onClick={handleReset} title="Đặt lại" className="h-[42px] px-3">
+                  <RotateCcw size={16} />
+                </Button>
+              </div>
+            </form>
+
             <TableContainer>
               <Table>
                 <thead>

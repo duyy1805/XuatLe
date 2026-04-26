@@ -16,12 +16,13 @@ const STATUS_MAP = {
   0: { label: 'Nháp', variant: 'neutral' },
   1: { label: 'Đang chờ duyệt', variant: 'warning' },
   2: { label: 'Chờ tạo lệnh ERP', variant: 'info' },
-  3: { label: 'Đang thực hiện', variant: 'primary' },
-  4: { label: 'Đang thực hiện', variant: 'primary' },
-  5: { label: 'Đang thực hiện', variant: 'primary' },
-  6: { label: 'Đang thực hiện', variant: 'primary' },
+  3: { label: 'Đã tạo lệnh ERP', variant: 'primary' },
+  4: { label: 'Đang xuất kho', variant: 'primary' },
+  5: { label: 'Đã xuất đủ', variant: 'primary' },
+  6: { label: 'Đang nhập lại', variant: 'primary' },
   7: { label: 'Hoàn thành', variant: 'success' },
-  9: { label: 'Đã huỷ', variant: 'danger' }
+  8: { label: 'Quá hạn', variant: 'danger' },
+  9: { label: 'Đã hủy', variant: 'danger' }
 };
 
 const containerVariants = {
@@ -95,12 +96,6 @@ export default function YeuCauDetail() {
       switch (action) {
         case 'submit':
           res = await yeuCauApi.submit(id);
-          break;
-        case 'approve':
-          res = await yeuCauApi.approve(id, { isApprove: true });
-          break;
-        case 'reject':
-          res = await yeuCauApi.approve(id, { isApprove: false, lyDo: 'Từ chối' });
           break;
         case 'cancel':
           res = await yeuCauApi.cancel(id, { lyDo: 'Huỷ yêu cầu' });
@@ -182,21 +177,10 @@ export default function YeuCauDetail() {
         </div>
 
         <div className="flex flex-wrap gap-2">
-          {header.TrangThai === 0 && (
-            <Button onClick={() => handleAction('submit', 'Trình duyệt')} isLoading={actionLoading}>
-              <Send size={16} /> Trình duyệt
+          {(header.TrangThai === 0 || header.TrangThai === 1) && (
+            <Button onClick={() => handleAction('submit', 'Xác nhận')} isLoading={actionLoading}>
+              <CheckCircle size={16} /> Xác nhận
             </Button>
-          )}
-
-          {header.TrangThai === 1 && (
-            <>
-              <Button variant="danger" onClick={() => handleAction('reject', 'Từ chối')} isLoading={actionLoading}>
-                <XCircle size={16} /> Từ chối
-              </Button>
-              <Button variant="success" onClick={() => handleAction('approve', 'Phê duyệt')} isLoading={actionLoading}>
-                <CheckCircle size={16} /> Phê duyệt
-              </Button>
-            </>
           )}
 
           {header.TrangThai === 2 && (

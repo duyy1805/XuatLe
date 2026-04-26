@@ -5,7 +5,7 @@ import { Card, CardBody, CardHeader, CardTitle } from '../components/ui/Card';
 import { Input, Select } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
 import { Table, TableContainer } from '../components/ui/Table';
-import { Save, ArrowLeft, PackagePlus, Plus, Trash2 } from 'lucide-react';
+import { Save, ArrowLeft, PackagePlus, Plus, Trash2, CheckCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import sourceApi from '../api/sourceApi';
@@ -255,7 +255,7 @@ export default function YeuCauCreate() {
     setDsVatTu(newVatTu);
   };
 
-  const handleSaveDraft = async () => {
+  const handleSave = async (isConfirm = false) => {
     if (!formData.idCongDoanLe) {
       toast.error('Vui lòng chọn Công đoạn lẻ!');
       return;
@@ -291,12 +291,23 @@ export default function YeuCauCreate() {
 
       const res = await yeuCauApi.saveDraft(payload);
       if (res.success) {
+        const newId = res.data.ID_XuatLe_YeuCau;
+
+        if (isConfirm) {
+          const submitRes = await yeuCauApi.submit(newId);
+          if (submitRes.success) {
+            toast.success('Tạo và xác nhận yêu cầu thành công!');
+            navigate(`/yeu-cau/${newId}`);
+            return;
+          }
+        }
+
         toast.success('Tạo yêu cầu thành công!');
-        navigate(`/yeu-cau/${res.data.ID_XuatLe_YeuCau}`);
+        navigate(`/yeu-cau/${newId}`);
       }
     } catch (error) {
       console.error(error);
-      toast.error(error.message || 'Lỗi lưu nháp');
+      toast.error(error.message || 'Lỗi lưu dữ liệu');
     } finally {
       setLoading(false);
     }
@@ -318,9 +329,14 @@ export default function YeuCauCreate() {
             <PackagePlus size={20} className="text-blue-600" /> Tạo Yêu cầu Xuất lẻ
           </h2>
         </div>
-        <Button onClick={handleSaveDraft} isLoading={loading} className="px-6 shadow-[0_0_15px_rgba(37,99,235,0.15)]">
-          <Save size={16} /> Lưu Nháp
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={() => handleSave(false)} isLoading={loading} className="bg-white">
+            <Save size={16} /> Lưu Nháp
+          </Button>
+          <Button onClick={() => handleSave(true)} isLoading={loading} className="px-6 shadow-[0_0_15px_rgba(37,99,235,0.15)]">
+            <CheckCircle size={16} /> Lưu & Xác nhận
+          </Button>
+        </div>
       </motion.div>
 
       <div className="flex flex-col gap-6">

@@ -131,9 +131,16 @@ const yeuCauController = {
       const id = parseInt(req.params.id, 10);
       if (!id) return sendError(res, 'ID không hợp lệ.');
 
-      const result = await yeuCauRepo.submit(id, req.taiKhoan);
-      if (result?.Code !== 0) return sendError(res, result?.Message || 'Lỗi trình duyệt.');
-      return sendSuccess(res, result, result.Message);
+      // 1. Submit (Draft -> WaitApprove)
+      const resSubmit = await yeuCauRepo.submit(id, req.taiKhoan);
+      if (resSubmit?.Code !== 0) return sendError(res, resSubmit?.Message || 'Lỗi trình duyệt.');
+
+      // 2. Auto-approve (WaitApprove -> Ready for ERP)
+      // We skip the manual approval step as requested by the user.
+      const resApprove = await yeuCauRepo.approve(id, true, 'Xác nhận tự động (Bỏ qua bước phê duyệt)', req.taiKhoan);
+      if (resApprove?.Code !== 0) return sendError(res, resApprove?.Message || 'Lỗi xác nhận tự động.');
+
+      return sendSuccess(res, resApprove, 'Xác nhận yêu cầu thành công.');
     } catch (err) {
       next(err);
     }
