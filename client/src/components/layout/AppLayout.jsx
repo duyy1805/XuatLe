@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { NavLink, Outlet, useLocation } from 'react-router-dom';
-import { LayoutDashboard, FileText, BarChart3, PackageOpen, ChevronLeft, ChevronRight } from 'lucide-react';
+import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { LayoutDashboard, FileText, BarChart3, PackageOpen, ChevronLeft, ChevronRight, LogOut } from 'lucide-react';
 import { motion } from 'framer-motion';
 import clsx from 'clsx';
+import { useAuth } from '../../contexts/AuthContext';
 
 const navItems = [
   { path: '/', label: 'Dashboard', icon: LayoutDashboard },
@@ -12,7 +13,14 @@ const navItems = [
 
 export function AppLayout() {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user, logout } = useAuth();
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
 
   const getPageTitle = () => {
     if (location.pathname === '/') return 'Dashboard';
@@ -88,9 +96,20 @@ export function AppLayout() {
             <h1 className="text-xl font-semibold text-slate-950">{getPageTitle()}</h1>
             <div className="mt-0.5 h-1 w-12 rounded-full bg-blue-600" />
           </div>
-          <div className="flex cursor-pointer items-center gap-3 rounded-full border border-slate-200 bg-white py-1.5 pr-3 pl-1.5 text-sm font-medium text-slate-800 shadow-sm transition hover:border-blue-200 hover:shadow-md">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-linear-to-br from-blue-600 to-cyan-500 font-semibold text-white shadow-sm">U</div>
-            <span>TaiKhoan: {import.meta.env.VITE_DEFAULT_TAI_KHOAN || 1}</span>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 rounded-full border border-slate-200 bg-white py-1.5 pr-3 pl-1.5 text-sm font-medium text-slate-800 shadow-sm">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-cyan-500 font-semibold text-white shadow-sm">
+                {(user?.tenDayDu || user?.tenDangNhap || 'U').charAt(0).toUpperCase()}
+              </div>
+              <span>{user?.tenDayDu || user?.tenDangNhap || 'User'}</span>
+            </div>
+            <button
+              onClick={handleLogout}
+              title="Đăng xuất"
+              className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-sm transition hover:border-red-200 hover:bg-red-50 hover:text-red-600"
+            >
+              <LogOut size={16} />
+            </button>
           </div>
         </header>
 

@@ -3,13 +3,17 @@
 const router = require('express').Router();
 const auth = require('../middleware/auth');
 
+const authRoutes = require('./auth.routes');
 const dmRoutes = require('./dm.routes');
 const sourceRoutes = require('./source.routes');
 const yeuCauRoutes = require('./yeuCau.routes');
 const phieuRoutes = require('./phieu.routes');
 const reportRoutes = require('./report.routes');
 
-// Áp dụng auth middleware cho tất cả routes
+// ─── Public routes (không cần auth) ────────────────────────────────────────────
+router.use('/auth', authRoutes);
+
+// Áp dụng auth middleware cho tất cả routes phía dưới
 router.use(auth);
 
 // ─── Sub-routes ────────────────────────────────────────────────────────────────

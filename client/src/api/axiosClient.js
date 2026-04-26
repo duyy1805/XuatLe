@@ -10,8 +10,11 @@ const axiosClient = axios.create({
 // Add a request interceptor
 axiosClient.interceptors.request.use(
   (config) => {
-    // Luôn đính kèm tài khoản mặc định để pass qua middleware auth của backend
-    config.headers['x-tai-khoan'] = import.meta.env.VITE_DEFAULT_TAI_KHOAN || '1';
+    // Đính kèm JWT token nếu có
+    const token = localStorage.getItem('xuatle_token');
+    if (token) {
+      config.headers['Authorization'] = `Bearer ${token}`;
+    }
     return config;
   },
   (error) => {
@@ -28,9 +31,17 @@ axiosClient.interceptors.response.use(
     return response;
   },
   (error) => {
-    // Handle error globally
+    // Nếu 401 Unauthorized → xóa token, redirect về login
+    if (error.response?.status === 401) {
+      localStorage.removeItem('xuatle_token');
+      localStorage.removeItem('xuatle_user');
+      // Chỉ redirect nếu đang không ở trang login
+      if (!window.location.pathname.includes('/login')) {
+        window.location.href = '/login';
+      }
+    }
+
     const message = error.response?.data?.message || error.message || 'Lỗi kết nối Server';
-    // Ở đây có thể tích hợp toast notification
     console.error('API Error:', message);
     return Promise.reject(error.response?.data || { success: false, message });
   }
