@@ -196,8 +196,10 @@ export default function YeuCauList() {
                     <th>Mã YC</th>
                     <th>Ngày yêu cầu</th>
                     <th>Công đoạn lẻ</th>
-                    <th>Người tạo</th>
+                    {/* <th>Người tạo</th> */}
                     <th>Tiến độ (Xuất/Nhập)</th>
+                    <th>Bộ phận</th>
+                    <th>Hạn hoàn thành</th>
                     <th>Trạng thái</th>
                     <th className="text-right">Thao tác</th>
                   </tr>
@@ -225,7 +227,7 @@ export default function YeuCauList() {
                         <td className="font-semibold text-blue-600">#{item.ID_XuatLe_YeuCau}</td>
                         <td>{item.Ngay_YeuCau ? format(new Date(item.Ngay_YeuCau), 'dd/MM/yyyy') : ''}</td>
                         <td className="font-medium">{item.Ten_CongDoanLe}</td>
-                        <td>{item.TaiKhoan_Lap}</td>
+                        {/* <td>{item.Ten_NguoiLap || item.TaiKhoan_Lap}</td> */}
                         <td>
                           <div className="flex flex-col gap-2.5 min-w-[120px] py-1">
                             {/* Tiến độ Xuất */}
@@ -242,7 +244,7 @@ export default function YeuCauList() {
                                 />
                               </div>
                             </div>
-                            
+
                             {/* Tiến độ Nhập */}
                             <div className="flex flex-col gap-1">
                               <div className="flex justify-between text-[9px] font-bold uppercase text-emerald-600/80 dark:text-emerald-400/80">
@@ -259,6 +261,8 @@ export default function YeuCauList() {
                             </div>
                           </div>
                         </td>
+                        <td>{item.Ten_BoPhan_Nhan}</td>
+                        <td>{item.Deadline_HoanThanh ? format(new Date(item.Deadline_HoanThanh), 'dd/MM/yyyy') : ''}</td>
                         <td>
                           <Badge variant={STATUS_MAP[item.TrangThai]?.variant || 'neutral'}>
                             {STATUS_MAP[item.TrangThai]?.label || `Trạng thái ${item.TrangThai}`}
@@ -266,7 +270,7 @@ export default function YeuCauList() {
                         </td>
                         <td className="text-right">
                           <Button variant="secondary" size="sm" onClick={() => navigate(`/yeu-cau/${item.ID_XuatLe_YeuCau}`)}>
-                            <Eye size={14} /> Chi tiết
+                            <Eye size={14} />
                           </Button>
                         </td>
                       </motion.tr>

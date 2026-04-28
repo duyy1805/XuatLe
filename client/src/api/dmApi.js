@@ -9,6 +9,9 @@ const dmApi = {
   },
   getNhaCungCap: (params) => {
     return axiosClient.get('/dm/nha-cung-cap', { params });
+  },
+  getBoPhan: (params) => {
+    return axiosClient.get('/dm/bo-phan', { params });
   }
 };
 

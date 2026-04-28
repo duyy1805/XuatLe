@@ -2,6 +2,7 @@
 
 const khoRepo = require('../repositories/khoRepository');
 const nccRepo = require('../repositories/nhaCungCapRepository');
+const boPhanRepo = require('../repositories/boPhanRepository');
 const { sendSuccess } = require('../utils/response');
 
 const dmController = {
@@ -30,6 +31,23 @@ const dmController = {
     try {
       const { keyword, suDung } = req.query;
       const data = await nccRepo.getList({
+        keyword,
+        suDung: suDung != null ? Number(suDung) : 1,
+      });
+      return sendSuccess(res, data);
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  /**
+   * GET /api/dm/bo-phan
+   * Query: keyword, suDung
+   */
+  async getBoPhanList(req, res, next) {
+    try {
+      const { keyword, suDung } = req.query;
+      const data = await boPhanRepo.getList({
         keyword,
         suDung: suDung != null ? Number(suDung) : 1,
       });

@@ -140,7 +140,7 @@ export default function YeuCauCreate() {
   const [loading, setLoading] = useState(false);
   const [dsKeHoach, setDsKeHoach] = useState([]);
   const [dsCongDoan, setDsCongDoan] = useState([]);
-  const [dsNhaCungCap, setDsNhaCungCap] = useState([]);
+  const [dsBoPhan, setDsBoPhan] = useState([]);
   const [dsVatTu, setDsVatTu] = useState([]);
   const [vatTuByKeHoach, setVatTuByKeHoach] = useState({});
   const [loadingRows, setLoadingRows] = useState({});
@@ -148,7 +148,7 @@ export default function YeuCauCreate() {
   const [formData, setFormData] = useState({
     idCongDoanLe: '',
     idBoPhanNguon: '3',
-    idNhaCungCap: '',
+    idBoPhanNhan: '',
     ngayYeuCau: new Date().toISOString().slice(0, 10),
     ngayDuKienXuat: '',
     deadlineHoanThanh: '',
@@ -159,11 +159,11 @@ export default function YeuCauCreate() {
     Promise.all([
       sourceApi.getKeHoach({}),
       dmApi.getCongDoanLe({}),
-      dmApi.getNhaCungCap({})
-    ]).then(([resKh, resCd, resNcc]) => {
+      dmApi.getBoPhan({})
+    ]).then(([resKh, resCd, resBp]) => {
       if (resKh.success) setDsKeHoach(resKh.data);
       if (resCd.success) setDsCongDoan(resCd.data);
-      if (resNcc.success) setDsNhaCungCap(resNcc.data);
+      if (resBp.success) setDsBoPhan(resBp.data);
     }).catch(() => {
       toast.error('Lỗi tải dữ liệu danh mục');
     });
@@ -175,8 +175,8 @@ export default function YeuCauCreate() {
       .join(' - ');
   };
 
-  const getNhaCungCapLabel = (ncc) => {
-    return [ncc.MaSo_NhaCungCap, ncc.Ten_NhaCungCap].filter(Boolean).join(' - ');
+  const getBoPhanLabel = (bp) => {
+    return [bp.Ma_NhaThau, bp.Ten_BoPhan].filter(Boolean).join(' - ');
   };
 
   const getVatTuLabel = (vt) => {
@@ -362,13 +362,13 @@ export default function YeuCauCreate() {
                 </Select>
 
                 <SearchableSelect
-                  label="Nhà cung cấp"
-                  value={formData.idNhaCungCap}
-                  options={dsNhaCungCap}
-                  getValue={ncc => ncc.ID_NhaCungCap}
-                  getLabel={getNhaCungCapLabel}
-                  placeholder="Nhập để tìm nhà cung cấp..."
-                  onChange={ncc => setFormData({ ...formData, idNhaCungCap: ncc.ID_NhaCungCap })}
+                  label="Bộ phận nhận"
+                  value={formData.idBoPhanNhan}
+                  options={dsBoPhan}
+                  getValue={bp => bp.ID_BoPhan}
+                  getLabel={getBoPhanLabel}
+                  placeholder="Nhập để tìm bộ phận..."
+                  onChange={bp => setFormData({ ...formData, idBoPhanNhan: bp.ID_BoPhan })}
                   wrapperClass="lg:col-span-3"
                 />
 

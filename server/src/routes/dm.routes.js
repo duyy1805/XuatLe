@@ -16,4 +16,7 @@ router.get('/kho', dmCtrl.getKhoList);
 // ─── Nhà cung cấp ─────────────────────────────────────────────────────────────
 router.get('/nha-cung-cap', dmCtrl.getNhaCungCapList);
 
+// ─── Bộ phận ──────────────────────────────────────────────────────────────────
+router.get('/bo-phan', dmCtrl.getBoPhanList);
+
 module.exports = router;

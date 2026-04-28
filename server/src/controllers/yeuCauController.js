@@ -22,6 +22,7 @@ const yeuCauController = {
         idNhaCungCap: req.query.idNhaCungCap ? Number(req.query.idNhaCungCap) : null,
         idKeHoachSanXuat: req.query.idKeHoachSanXuat ? Number(req.query.idKeHoachSanXuat) : null,
         idDonHangSanPham: req.query.idDonHangSanPham ? Number(req.query.idDonHangSanPham) : null,
+        taiKhoan: req.taiKhoan, // Chỉ xem phiếu do mình tạo
       };
 
       // Auto-sync all active requests from ERP before getting list
@@ -222,7 +223,7 @@ const yeuCauController = {
     try {
       const id = parseInt(req.params.id, 10);
       if (!id) return sendError(res, 'ID không hợp lệ.');
-      
+
       const { idKhoNhap, chiTiet, ghiChu } = req.body;
       if (!idKhoNhap) return sendError(res, 'Vui lòng chọn Kho nhập.');
       if (!Array.isArray(chiTiet) || chiTiet.length === 0) {

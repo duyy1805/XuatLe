@@ -24,6 +24,7 @@ const yeuCauRepository = {
     req.input('Keyword', sql.NVarChar(100), params.keyword || null);
     req.input('TuNgay', sql.Date, params.tuNgay || null);
     req.input('DenNgay', sql.Date, params.denNgay || null);
+    req.input('TaiKhoan', sql.SmallInt, params.taiKhoan || null);
 
     const result = await req.execute('dbo.usp_XuatLe_YeuCau_GetList');
     return result.recordset;
