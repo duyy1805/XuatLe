@@ -173,7 +173,12 @@ export default function YeuCauCreate() {
   }, []);
 
   const getKeHoachLabel = useCallback((kh) => {
-    return [kh.So_LenhSanXuat, kh.Ma_VatTu, kh.Ten_VatTu, `KH#${kh.ID_KeHoachSanXuat}`]
+    return [
+      kh.So_LenhSanXuat,
+      kh.Ten_SanPham,
+      kh.Ten_QuyTrinhSanXuat,
+      `KH#${kh.ID_KeHoachSanXuat}`
+    ]
       .filter(Boolean)
       .join(' - ');
   }, []);
@@ -216,8 +221,11 @@ export default function YeuCauCreate() {
           ID_DonHang: selectedKh.ID_DonHang,
           ID_DonHang_SanPham: selectedKh.ID_DonHang_SanPham,
           ID_DonHang_LoSanXuat: selectedKh.ID_DonHang_LoSanXuat || null,
-          Ma_VatTu_SP: selectedKh.Ma_VatTu,
-          Ten_VatTu_SP: selectedKh.Ten_VatTu,
+          Ma_VatTu_SP: selectedKh.ItemCode,
+          Ten_VatTu_SP: selectedKh.Ten_SanPham,
+          Ten_SanPham: selectedKh.Ten_SanPham,
+          Ten_QuyTrinhSanXuat: selectedKh.Ten_QuyTrinhSanXuat,
+          Ten_BoPhan: selectedKh.Ten_BoPhan,
           So_LenhSanXuat: selectedKh.So_LenhSanXuat,
           SoLuong_KeHoach: selectedKh.SoLuong_KeHoach_CT || 0,
           SoLuongConLai: selectedKh.SoLuong_KeHoach_CT || 0, // start with full plan qty
@@ -441,11 +449,13 @@ export default function YeuCauCreate() {
                   <thead>
                     <tr>
                       <th className="w-8 border-b bg-slate-50 dark:border-white/10 dark:bg-slate-950"></th>
-                      <th className="min-w-[260px] border-b bg-slate-50">Kế hoạch</th>
-                      <th className="min-w-[260px] border-b bg-slate-50">Vật tư</th>
+                      <th className="min-w-[200px] border-b bg-slate-50">Kế hoạch</th>
+                      <th className="min-w-[180px] border-b bg-slate-50">Sản phẩm</th>
+                      <th className="min-w-[150px] border-b bg-slate-50">Lên plan</th>
+                      <th className="min-w-[220px] border-b bg-slate-50">Vật tư</th>
                       <th className="border-b bg-slate-50 text-right">SL kế hoạch</th>
                       <th className="border-b bg-slate-50 text-right">Còn lại</th>
-                      <th style={{ width: 130 }} className="border-b bg-slate-50 text-right">Đề nghị xuất</th>
+                      <th style={{ width: 120 }} className="border-b bg-slate-50 text-right">Đề nghị</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -485,9 +495,19 @@ export default function YeuCauCreate() {
                                 options={dsKeHoach}
                                 getValue={kh => kh.ID_KeHoachSanXuat}
                                 getLabel={getKeHoachLabel}
-                                placeholder="Nhập để lọc kế hoạch..."
+                                placeholder="Lọc kế hoạch..."
                                 onChange={(kh) => handleKeHoachChange(index, kh)}
                               />
+                            </td>
+                            <td className="text-sm">
+                              <div className="font-medium text-slate-900 dark:text-white line-clamp-2" title={vt.Ten_SanPham}>
+                                {vt.Ten_SanPham || '-'}
+                              </div>
+                            </td>
+                            <td className="text-sm text-slate-500">
+                              <div className="line-clamp-2" title={vt.Ten_QuyTrinhSanXuat}>
+                                {vt.Ten_QuyTrinhSanXuat || '-'}
+                              </div>
                             </td>
                             <td>
                               <SearchableSelect
