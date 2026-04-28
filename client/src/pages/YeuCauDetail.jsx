@@ -449,7 +449,7 @@ export default function YeuCauDetail() {
                 <div className="mt-0.5 text-slate-500 dark:text-slate-400"><User size={18} /></div>
                 <div>
                   <div className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">Người tạo</div>
-                  <div className="mt-0.5 font-semibold text-slate-900 dark:text-white">{header.TaiKhoan_Lap}</div>
+                  <div className="mt-0.5 font-semibold text-slate-900 dark:text-white">{header.Ten_NguoiLap}</div>
                 </div>
               </div>
             </CardBody>
