@@ -28,6 +28,9 @@ const yeuCauApi = {
   close: (id) => {
     return axiosClient.post(`/yeu-cau/${id}/close`);
   },
+  nhapLai: (id, data) => {
+    return axiosClient.post(`/yeu-cau/${id}/nhap-lai`, data);
+  },
   // Lệnh Xuất
   getLenhXuat: (id) => {
     return axiosClient.get(`/yeu-cau/${id}/lenh-xuat`);
@@ -42,11 +45,17 @@ const yeuCauApi = {
   getPhieuXuat: (id) => {
     return axiosClient.get(`/yeu-cau/${id}/phieu-xuat`);
   },
+  getPhieuXuatDetail: (idPhieu) => {
+    return axiosClient.get(`/yeu-cau/phieu-xuat/${idPhieu}`);
+  },
   syncPhieuXuat: (id) => {
     return axiosClient.post(`/yeu-cau/${id}/sync-xuat`);
   },
   getPhieuNhap: (id) => {
     return axiosClient.get(`/yeu-cau/${id}/phieu-nhap`);
+  },
+  getPhieuNhapDetail: (idPhieu) => {
+    return axiosClient.get(`/yeu-cau/phieu-nhap/${idPhieu}`);
   },
   syncPhieuNhap: (id) => {
     return axiosClient.post(`/yeu-cau/${id}/sync-nhap`);

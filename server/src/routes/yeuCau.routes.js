@@ -17,6 +17,7 @@ router.post('/:id/submit', yeuCauCtrl.submit);          // Trình duyệt
 router.post('/:id/approve', yeuCauCtrl.approve);        // Phê duyệt / Từ chối
 router.post('/:id/cancel', yeuCauCtrl.cancel);          // Huỷ
 router.post('/:id/close', yeuCauCtrl.close);            // Đóng / Hoàn thành
+router.post('/:id/nhap-lai', yeuCauCtrl.nhapLai);       // Nhập lại vật tư
 
 // ─── Lệnh xuất ───────────────────────────────────────────────────────────────
 router.get('/:id/lenh-xuat', lenhXuatCtrl.getLenhXuat);
@@ -25,10 +26,12 @@ router.delete('/:id/lenh-xuat/:idLenh', lenhXuatCtrl.unlinkLenhXuat);
 
 // ─── Phiếu xuất (theo yêu cầu) ───────────────────────────────────────────────
 router.get('/:id/phieu-xuat', lenhXuatCtrl.getPhieuXuat);
+router.get('/phieu-xuat/:idPhieu', lenhXuatCtrl.getPhieuXuatDetail);
 router.post('/:id/sync-xuat', lenhXuatCtrl.syncPhieuXuat);
 
 // ─── Phiếu nhập (theo yêu cầu) ───────────────────────────────────────────────
 router.get('/:id/phieu-nhap', lenhXuatCtrl.getPhieuNhap);
+router.get('/phieu-nhap/:idPhieu', lenhXuatCtrl.getPhieuNhapDetail);
 router.post('/:id/sync-nhap', lenhXuatCtrl.syncPhieuNhap);
 
 // ─── Đối soát ────────────────────────────────────────────────────────────────

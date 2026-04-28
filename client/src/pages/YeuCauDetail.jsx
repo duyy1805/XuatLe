@@ -11,6 +11,9 @@ import { toast } from 'sonner';
 import { useConfirm } from '../hooks/useConfirm';
 import yeuCauApi from '../api/yeuCauApi';
 import { format } from 'date-fns';
+import ModalNhapLai from './ModalNhapLai';
+import { Modal } from '../components/ui/Modal';
+import { Eye } from 'lucide-react';
 
 const STATUS_MAP = {
   0: { label: 'Nháp', variant: 'neutral' },
@@ -51,11 +54,39 @@ export default function YeuCauDetail() {
   const [data, setData] = useState(null);
   const [actionLoading, setActionLoading] = useState(false);
 
+  const [isNhapLaiModalOpen, setIsNhapLaiModalOpen] = useState(false);
+  const [nhapLaiLoading, setNhapLaiLoading] = useState(false);
+
+  const [phieuXuatList, setPhieuXuatList] = useState([]);
+  const [phieuNhapList, setPhieuNhapList] = useState([]);
+  const [receiptsLoading, setReceiptsLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState('summary'); // 'summary' | 'receipts'
+
+  const [receiptItemsModal, setReceiptItemsModal] = useState({ isOpen: false, type: null, data: null, items: [] });
+  const [receiptItemsLoading, setReceiptItemsLoading] = useState(false);
+
+  const fetchReceipts = useCallback(async () => {
+    try {
+      setReceiptsLoading(true);
+      const [resXuat, resNhap] = await Promise.all([
+        yeuCauApi.getPhieuXuat(id),
+        yeuCauApi.getPhieuNhap(id)
+      ]);
+      if (resXuat.success) setPhieuXuatList(resXuat.data);
+      if (resNhap.success) setPhieuNhapList(resNhap.data);
+    } catch (error) {
+      console.error('Lỗi khi tải danh sách phiếu:', error);
+    } finally {
+      setReceiptsLoading(false);
+    }
+  }, [id]);
+
   const fetchDetail = useCallback(async () => {
     try {
       const res = await yeuCauApi.getById(id);
       if (res.success) {
         setData(res.data);
+        fetchReceipts();
       }
     } catch (error) {
       console.error(error);
@@ -63,22 +94,11 @@ export default function YeuCauDetail() {
     } finally {
       setLoading(false);
     }
-  }, [id]);
+  }, [id, fetchReceipts]);
 
   useEffect(() => {
-    let ignore = false;
-    async function startFetching() {
-      const res = await yeuCauApi.getById(id);
-      if (!ignore && res.success) {
-        setData(res.data);
-        setLoading(false);
-      }
-    }
-    startFetching();
-    return () => {
-      ignore = true;
-    };
-  }, [id]);
+    fetchDetail();
+  }, [fetchDetail]);
 
   const handleAction = async (action, actionName) => {
     const isConfirmed = await confirm({
@@ -124,6 +144,42 @@ export default function YeuCauDetail() {
       toast.error(error.message || `Lỗi ${actionName}`);
     } finally {
       setActionLoading(false);
+    }
+  };
+
+  const handleNhapLaiSubmit = async (idKhoNhap, payload, ghiChu) => {
+    try {
+      setNhapLaiLoading(true);
+      const res = await yeuCauApi.nhapLai(id, { idKhoNhap, chiTiet: payload, ghiChu });
+      if (res.success) {
+        toast.success('Nhập lại vật tư thành công!');
+        setIsNhapLaiModalOpen(false);
+        fetchDetail();
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error('Lỗi khi thực hiện nhập lại');
+    } finally {
+      setNhapLaiLoading(false);
+    }
+  };
+
+  const handleViewReceiptItems = async (type, receipt) => {
+    try {
+      setReceiptItemsModal({ isOpen: true, type, data: receipt, items: [] });
+      setReceiptItemsLoading(true);
+      const res = type === 'xuat'
+        ? await yeuCauApi.getPhieuXuatDetail(receipt.ID_PhieuXuatVT)
+        : await yeuCauApi.getPhieuNhapDetail(receipt.ID_PhieuNhapVT);
+
+      if (res.success) {
+        setReceiptItemsModal(prev => ({ ...prev, items: res.data }));
+      }
+    } catch (error) {
+      console.error('Lỗi khi tải chi tiết phiếu:', error);
+      toast.error('Không thể tải chi tiết vật tư của phiếu');
+    } finally {
+      setReceiptItemsLoading(false);
     }
   };
 
@@ -189,6 +245,12 @@ export default function YeuCauDetail() {
             </Button>
           )}
 
+          {[4, 5, 6].includes(header.TrangThai) && (
+            <Button variant="primary" onClick={() => setIsNhapLaiModalOpen(true)}>
+              <Box size={16} /> Nhập lại vật tư
+            </Button>
+          )}
+
 
           {(header.TrangThai === 0 || header.TrangThai === 1) && (
             <Button variant="outline" className="border-red-600 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20" onClick={() => handleAction('cancel', 'Huỷ')} isLoading={actionLoading}>
@@ -200,37 +262,136 @@ export default function YeuCauDetail() {
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         <motion.div variants={itemVariants} className="xl:col-span-2">
+          {/* New Receipts Section */}
           <Card>
-            <CardHeader>
-              <CardTitle>Danh sách vật tư xuất</CardTitle>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <div className="flex gap-4">
+                <button
+                  onClick={() => setActiveTab('summary')}
+                  className={`text-lg font-bold pb-1 border-b-2 transition-colors ${activeTab === 'summary' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-400 hover:text-slate-600'}`}
+                >
+                  Tổng hợp vật tư
+                </button>
+                <button
+                  onClick={() => setActiveTab('receipts')}
+                  className={`text-lg font-bold pb-1 border-b-2 transition-colors ${activeTab === 'receipts' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-400 hover:text-slate-600'}`}
+                >
+                  Lịch sử Giao nhận ({phieuXuatList.length + phieuNhapList.length})
+                </button>
+              </div>
+              {/* <Button variant="ghost" size="sm" onClick={fetchReceipts} isLoading={receiptsLoading}>
+                Làm mới
+              </Button> */}
             </CardHeader>
             <CardBody>
-              <TableContainer>
-                <Table>
-                  <thead>
-                    <tr>
-                      <th>Lệnh SX</th>
-                      <th>Mã VT</th>
-                      <th className="text-right">Đề nghị</th>
-                      <th className="text-right">Đã xuất</th>
-                      <th className="text-right">Đã nhập</th>
-                      <th className="text-right">Hao hụt</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {chiTiet.map((vt) => (
-                      <tr key={vt.ID_Dong}>
-                        <td className="font-medium text-blue-600">{vt.So_LenhSanXuat || '-'}</td>
-                        <td className="font-semibold">{vt.Ma_VatTu}</td>
-                        <td className="text-right">{vt.SoLuong_DeNghi_Xuat}</td>
-                        <td className="text-right font-medium text-blue-600">{vt.SoLuong_DaXuat}</td>
-                        <td className="text-right font-medium text-emerald-600">{vt.SoLuong_DaNhap}</td>
-                        <td className="text-right text-red-600">{vt.SoLuong_HaoHut}</td>
+              {activeTab === 'summary' ? (
+                <TableContainer>
+                  <Table>
+                    <thead>
+                      <tr>
+                        <th>Lệnh SX</th>
+                        <th>Mã VT</th>
+                        <th className="text-right">Đề nghị</th>
+                        <th className="text-right">Đã xuất</th>
+                        <th className="text-right">Đã nhập</th>
+                        <th className="text-right">Hao hụt</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </Table>
-              </TableContainer>
+                    </thead>
+                    <tbody>
+                      {chiTiet.map((vt) => (
+                        <tr key={vt.ID_Dong}>
+                          <td className="font-medium text-blue-600">{vt.So_LenhSanXuat || '-'}</td>
+                          <td className="font-semibold">{vt.Ma_VatTu}</td>
+                          <td className="text-right">{vt.SoLuong_DeNghi_Xuat}</td>
+                          <td className="text-right font-medium text-blue-600">{vt.SoLuong_DaXuat}</td>
+                          <td className="text-right font-medium text-emerald-600">{vt.SoLuong_DaNhap}</td>
+                          <td className="text-right text-red-600">{vt.SoLuong_HaoHut}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </Table>
+                </TableContainer>
+              ) : (
+                <div className="space-y-8">
+                  <div>
+                    <h4 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-4 flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-blue-500" /> Phiếu Xuất kho ({phieuXuatList.length})
+                    </h4>
+                    <TableContainer>
+                      <Table>
+                        <thead>
+                          <tr>
+                            <th>Số phiếu ERP</th>
+                            <th>Ngày xuất</th>
+                            <th className="text-right">Tổng SL</th>
+                            <th>Kho xuất</th>
+                            <th>Ghi chú</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {phieuXuatList.length > 0 ? phieuXuatList.map((px) => (
+                            <tr key={px.ID_XuatLe_PhieuXuat_Map}>
+                              <td className="font-bold text-blue-600">
+                                <button
+                                  onClick={() => handleViewReceiptItems('xuat', px)}
+                                  className="flex items-center gap-1 hover:underline"
+                                >
+                                  {px.So_PhieuXuatVT} <Eye size={12} />
+                                </button>
+                              </td>
+                              <td>{px.Ngay_XuatVT ? format(new Date(px.Ngay_XuatVT), 'dd/MM/yyyy') : '-'}</td>
+                              <td className="text-right font-semibold">{px.SoLuong_Xuat}</td>
+                              <td><Badge variant="neutral">{px.Ten_KhoXuat}</Badge></td>
+                              <td className="text-xs text-slate-500">{px.GhiChu || '-'}</td>
+                            </tr>
+                          )) : (
+                            <tr><td colSpan={5} className="text-center py-4 text-slate-400">Chưa có phiếu xuất</td></tr>
+                          )}
+                        </tbody>
+                      </Table>
+                    </TableContainer>
+                  </div>
+
+                  <div>
+                    <h4 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-4 flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-emerald-500" /> Phiếu Nhập kho ({phieuNhapList.length})
+                    </h4>
+                    <TableContainer>
+                      <Table>
+                        <thead>
+                          <tr>
+                            <th>Số phiếu ERP</th>
+                            <th>Ngày nhập</th>
+                            <th className="text-right">Tổng SL</th>
+                            <th>Kho nhập</th>
+                            <th>Ghi chú</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {phieuNhapList.length > 0 ? phieuNhapList.map((pn) => (
+                            <tr key={pn.ID_XuatLe_PhieuNhap_Map}>
+                              <td className="font-bold text-emerald-600">
+                                <button
+                                  onClick={() => handleViewReceiptItems('nhap', pn)}
+                                  className="flex items-center gap-1 hover:underline"
+                                >
+                                  {pn.So_PhieuNhapVT || 'Đang chờ...'} <Eye size={12} />
+                                </button>
+                              </td>
+                              <td>{pn.Ngay_NhapVT ? format(new Date(pn.Ngay_NhapVT), 'dd/MM/yyyy') : '-'}</td>
+                              <td className="text-right font-semibold">{pn.SoLuong_Nhap}</td>
+                              <td><Badge variant="neutral">{pn.Ten_KhoNhap}</Badge></td>
+                              <td className="text-xs text-slate-500">{pn.GhiChu || '-'}</td>
+                            </tr>
+                          )) : (
+                            <tr><td colSpan={5} className="text-center py-4 text-slate-400">Chưa có phiếu nhập</td></tr>
+                          )}
+                        </tbody>
+                      </Table>
+                    </TableContainer>
+                  </div>
+                </div>
+              )}
             </CardBody>
           </Card>
         </motion.div>
@@ -260,6 +421,80 @@ export default function YeuCauDetail() {
           </Card>
         </motion.div>
       </div>
+
+      {/* Modal chi tiết phiếu */}
+      <Modal
+        isOpen={receiptItemsModal.isOpen}
+        onClose={() => setReceiptItemsModal(prev => ({ ...prev, isOpen: false }))}
+        title={`Chi tiết vật tư: ${receiptItemsModal.data?.So_PhieuXuatVT || receiptItemsModal.data?.So_PhieuNhapVT || ''}`}
+        size="lg"
+      >
+        <div className="space-y-4">
+          <div className="flex justify-between items-start border-b pb-4 dark:border-slate-700">
+            <div>
+              <p className="text-xs text-slate-500 uppercase font-bold">Người giao/nhận</p>
+              <p className="font-medium">{receiptItemsModal.data?.NguoiNhanHang || receiptItemsModal.data?.NguoiGiaoHang || '-'}</p>
+            </div>
+            <div className="text-right">
+              <p className="text-xs text-slate-500 uppercase font-bold">Ngày thực hiện</p>
+              <p className="font-medium">
+                {receiptItemsModal.data?.Ngay_XuatVT || receiptItemsModal.data?.Ngay_NhapVT
+                  ? format(new Date(receiptItemsModal.data?.Ngay_XuatVT || receiptItemsModal.data?.Ngay_NhapVT), 'dd/MM/yyyy HH:mm')
+                  : '-'}
+              </p>
+            </div>
+          </div>
+
+          <TableContainer>
+            <Table>
+              <thead>
+                <tr>
+                  <th>Mã vật tư</th>
+                  <th>Tên vật tư</th>
+                  <th>ĐVT</th>
+                  <th className="text-right">Số lượng</th>
+                </tr>
+              </thead>
+              <tbody>
+                {receiptItemsLoading ? (
+                  <tr><td colSpan={4} className="text-center py-8"><Skeleton className="h-4 w-full" /></td></tr>
+                ) : receiptItemsModal.items.length > 0 ? (
+                  receiptItemsModal.items.map((item, idx) => (
+                    <tr key={idx}>
+                      <td className="font-bold">{item.Ma_VatTu}</td>
+                      <td className="text-sm">{item.Ten_VatTu}</td>
+                      <td>{item.Ten_DonViTinh}</td>
+                      <td className="text-right font-bold text-blue-600">
+                        {receiptItemsModal.type === 'xuat' ? item.SoLuong_XuatKho : item.SoLuong_NhapKho}
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr><td colSpan={4} className="text-center py-4 text-slate-400">Không có dữ liệu chi tiết</td></tr>
+                )}
+              </tbody>
+            </Table>
+          </TableContainer>
+
+          <div className="bg-slate-50 dark:bg-slate-900/50 p-3 rounded-lg text-sm italic text-slate-600">
+            <strong>Ghi chú:</strong> {receiptItemsModal.data?.GhiChu || 'Không có ghi chú'}
+          </div>
+
+          <div className="flex justify-end pt-2">
+            <Button onClick={() => setReceiptItemsModal(prev => ({ ...prev, isOpen: false }))}>
+              Đóng
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      <ModalNhapLai
+        isOpen={isNhapLaiModalOpen}
+        onClose={() => setIsNhapLaiModalOpen(false)}
+        data={chiTiet}
+        onSubmit={handleNhapLaiSubmit}
+        loading={nhapLaiLoading}
+      />
     </motion.div>
   );
 }

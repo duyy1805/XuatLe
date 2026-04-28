@@ -210,6 +210,32 @@ const yeuCauController = {
       next(err);
     }
   },
+
+  // ─── NHẬP LẠI ─────────────────────────────────────────────────────────────────
+
+  /**
+   * POST /api/yeu-cau/:id/nhap-lai
+   * Nhập lại vật tư.
+   * Body: { idKhoNhap: number, chiTiet: [{ idDong, soLuongNhapLai }], ghiChu?: string }
+   */
+  async nhapLai(req, res, next) {
+    try {
+      const id = parseInt(req.params.id, 10);
+      if (!id) return sendError(res, 'ID không hợp lệ.');
+      
+      const { idKhoNhap, chiTiet, ghiChu } = req.body;
+      if (!idKhoNhap) return sendError(res, 'Vui lòng chọn Kho nhập.');
+      if (!Array.isArray(chiTiet) || chiTiet.length === 0) {
+        return sendError(res, 'chiTiet không được rỗng.');
+      }
+
+      const result = await yeuCauRepo.nhapLai(id, idKhoNhap, chiTiet, ghiChu, req.taiKhoan);
+      if (result?.Code !== 0) return sendError(res, result?.Message || 'Lỗi nhập lại vật tư.');
+      return sendSuccess(res, result, result.Message);
+    } catch (err) {
+      next(err);
+    }
+  },
 };
 
 module.exports = yeuCauController;

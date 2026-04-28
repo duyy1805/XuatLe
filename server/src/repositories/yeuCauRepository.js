@@ -145,6 +145,24 @@ const yeuCauRepository = {
     const result = await req.execute('dbo.usp_XuatLe_CloseYeuCau');
     return result.recordset[0];
   },
+
+  /**
+   * Nhập lại vật tư đã xuất.
+   * SP: usp_XuatLe_YeuCau_NhapLai
+   */
+  async nhapLai(id, idKhoNhap, chiTiet, ghiChu, taiKhoan) {
+    const pool = getPool();
+    const req = pool.request();
+    req.input('ID_XuatLe_YeuCau', sql.BigInt, id);
+    req.input('ID_KhoNhap', sql.SmallInt, idKhoNhap);
+    req.input('ID_HinhThucNhapVT', sql.TinyInt, 5); // Default to Nhập trả lại
+    req.input('ChiTietJson', sql.NVarChar(sql.MAX), JSON.stringify(chiTiet || []));
+    req.input('GhiChu', sql.NVarChar(1000), ghiChu || null);
+    req.input('TaiKhoan', sql.SmallInt, taiKhoan);
+
+    const result = await req.execute('dbo.usp_XuatLe_YeuCau_NhapLai');
+    return result.recordset[0];
+  },
 };
 
 module.exports = yeuCauRepository;
