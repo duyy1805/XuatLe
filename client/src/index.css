@@ -6,3 +6,11 @@
 
 /* Fallback for manual dark mode in v4 */
 @variant dark (&:where(.dark, .dark *));
+
+/* Fix for date picker icon in dark mode */
+.dark input[type="date"]::-webkit-calendar-picker-indicator,
+.dark input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  cursor: pointer;
+}
+

@@ -15,7 +15,7 @@ const sourceRepository = {
     const req = pool.request();
 
     req.input('TuNgay', sql.Date, params.tuNgay || "2025-06-02");
-    req.input('DenNgay', sql.Date, params.denNgay || "2025-06-02");
+    req.input('DenNgay', sql.Date, params.denNgay || null);
     req.input('Ma_DonHang', sql.NVarChar(100), params.maDonHang || null);
     req.input('So_LenhSanXuat', sql.NVarChar(20), params.soLenhSanXuat || null);
     req.input('ItemCode', sql.NVarChar(50), params.itemCode || null);

@@ -1,13 +1,14 @@
 ### File này dùng chung với VS Code extension REST Client để test API nhanh.
 ### Yêu cầu cài extension REST Client: https://marketplace.visualstudio.com/items?itemName=humao.rest-client
 
-@baseUrl = http://localhost:5000/api
+@baseUrl = https://apixuatle.z76.vn/api
 @taiKhoan = 1
 
 ### ==========================================================
 ### 0. Health check
 ### ==========================================================
-GET http://localhost:3000/health
+GET http://localhost:500/health-check
+
 
 ### ==========================================================
 ### 1. Danh mục
