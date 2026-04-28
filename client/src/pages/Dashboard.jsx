@@ -4,6 +4,7 @@ import { Skeleton } from '../components/ui/Skeleton';
 import { FileText, Clock, Activity, AlertCircle, TrendingUp, BarChart2, Package, CheckCircle2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import reportApi from '../api/reportApi';
+import { format } from 'date-fns';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -92,16 +93,15 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
         <StatCard
           title="Tổng yêu cầu"
-          value={data?.TongYeuCau || 0}
+          value={data?.summary?.TongYeuCau || 0}
           loading={loading}
           icon={FileText}
-          trend="+12%"
           colorClass="text-blue-600 dark:text-blue-400"
           bgAlphaClass="bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400"
         />
         <StatCard
           title="Đang chờ duyệt"
-          value={data?.DangChoDuyet || 0}
+          value={data?.summary?.DangChoDuyet || 0}
           loading={loading}
           icon={Clock}
           colorClass="text-amber-600 dark:text-amber-400"
@@ -109,16 +109,15 @@ export default function Dashboard() {
         />
         <StatCard
           title="Đang xử lý"
-          value={data?.DangXuLy || 0}
+          value={data?.summary?.DangXuLy || 0}
           loading={loading}
           icon={Activity}
-          trend="+5%"
           colorClass="text-sky-600 dark:text-sky-400"
           bgAlphaClass="bg-sky-50 text-sky-600 dark:bg-sky-900/20 dark:text-sky-400"
         />
         <StatCard
           title="Quá hạn"
-          value={data?.QuaHan || 0}
+          value={data?.summary?.QuaHan || 0}
           loading={loading}
           icon={AlertCircle}
           colorClass="text-red-600 dark:text-red-400"
@@ -132,26 +131,33 @@ export default function Dashboard() {
             <CardHeader className="pb-2 border-none">
               <div className="flex items-center gap-2">
                 <BarChart2 className="text-blue-600" size={20} />
-                <CardTitle>Thống kê Yêu cầu theo tuần</CardTitle>
+                <CardTitle>Yêu cầu mới (7 ngày qua)</CardTitle>
               </div>
             </CardHeader>
             <CardBody className="h-72 flex items-end gap-4 justify-between pt-8">
-              {/* Dummy Chart Visualization */}
-              {[40, 70, 45, 90, 65, 85, 120].map((height, i) => (
-                <div key={i} className="w-full flex flex-col items-center gap-2 group cursor-pointer">
-                  <motion.div
-                    initial={{ height: 0 }}
-                    animate={{ height: `${height}%` }}
-                    transition={{ duration: 1, delay: i * 0.1, ease: "easeOut" }}
-                    className="relative w-full max-w-[48px] rounded-t-md bg-blue-50 transition-colors group-hover:bg-blue-600 dark:bg-blue-900/20 dark:group-hover:bg-blue-500"
-                  >
-                    <div className="absolute -top-8 left-1/2 -translate-x-1/2 rounded bg-slate-900 px-2 py-1 text-xs font-medium text-white opacity-0 transition-opacity group-hover:opacity-100 dark:bg-slate-800">
-                      {height * 2}
-                    </div>
-                  </motion.div>
-                  <div className="text-xs font-medium text-slate-500 dark:text-slate-400">T{i + 2}</div>
-                </div>
-              ))}
+              {loading ? (
+                <div className="w-full flex justify-center py-12"><Activity className="animate-spin text-blue-500" /></div>
+              ) : (data?.chart || []).map((day, i) => {
+                const maxVal = Math.max(...(data?.chart || []).map(d => d.Value), 1);
+                const heightPercent = (day.Value / maxVal) * 100;
+                return (
+                  <div key={i} className="w-full flex flex-col items-center gap-2 group cursor-pointer">
+                    <motion.div
+                      initial={{ height: 0 }}
+                      animate={{ height: `${Math.max(heightPercent, 5)}%` }}
+                      transition={{ duration: 1, delay: i * 0.1, ease: "easeOut" }}
+                      className="relative w-full max-w-[48px] rounded-t-md bg-blue-100 transition-colors group-hover:bg-blue-600 dark:bg-blue-900/40 dark:group-hover:bg-blue-500"
+                    >
+                      {day.Value > 0 && (
+                        <div className="absolute -top-8 left-1/2 -translate-x-1/2 rounded bg-slate-900 px-2 py-1 text-xs font-medium text-white opacity-0 transition-opacity group-hover:opacity-100 dark:bg-slate-800">
+                          {day.Value}
+                        </div>
+                      )}
+                    </motion.div>
+                    <div className="text-[10px] font-medium text-slate-500 dark:text-slate-400">{day.Label}</div>
+                  </div>
+                );
+              })}
             </CardBody>
           </Card>
         </motion.div>
@@ -161,21 +167,27 @@ export default function Dashboard() {
             <CardHeader className="border-b border-slate-100 pb-4 dark:border-white/10">
               <CardTitle className="text-base">Hoạt động gần đây</CardTitle>
             </CardHeader>
-            <CardBody className="pt-4">
+            <CardBody className="pt-4 max-h-[400px] overflow-y-auto custom-scrollbar">
               <div className="flex flex-col gap-6">
-                {[
-                  { title: 'Tạo mới yêu cầu #YC1002', time: '10 phút trước', icon: Package, color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-50 dark:bg-blue-900/20' },
-                  { title: 'Phê duyệt yêu cầu #YC0998', time: '1 giờ trước', icon: CheckCircle2, color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-50 dark:bg-emerald-900/20' },
-                  { title: 'Hủy yêu cầu #YC0995', time: '3 giờ trước', icon: AlertCircle, color: 'text-red-600 dark:text-red-400', bg: 'bg-red-50 dark:bg-red-900/20' },
-                  { title: 'Tạo lệnh xuất cho #YC0980', time: 'Hôm qua', icon: Activity, color: 'text-sky-600 dark:text-sky-400', bg: 'bg-sky-50 dark:bg-sky-900/20' },
-                ].map((act, i) => (
+                {loading ? (
+                  <div className="space-y-4">
+                    {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-12 w-full" />)}
+                  </div>
+                ) : (data?.activities || []).length === 0 ? (
+                  <div className="text-center py-12 text-slate-400 text-sm">Chưa có hoạt động nào</div>
+                ) : (data?.activities || []).map((act, i) => (
                   <div key={i} className="flex gap-4">
-                    <div className={`mt-0.5 w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${act.bg} ${act.color}`}>
-                      <act.icon size={16} />
+                    <div className={`mt-0.5 w-8 h-8 rounded-full flex items-center justify-center shrink-0 bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 border border-slate-100 dark:border-white/5`}>
+                      <Activity size={16} />
                     </div>
                     <div>
-                      <div className="text-sm font-medium text-slate-900 dark:text-white">{act.title}</div>
-                      <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">{act.time}</div>
+                      <div className="text-sm font-medium text-slate-900 dark:text-white line-clamp-2">
+                        {act.NoiDung} {act.So_YeuCau && <span className="text-blue-600 dark:text-blue-400">#{act.So_YeuCau}</span>}
+                      </div>
+                      <div className="mt-1 text-[11px] text-slate-500 dark:text-slate-400 flex flex-col">
+                        <span>{act.NguoiThucHien}</span>
+                        <span>{act.ThoiGian_ThucHien ? format(new Date(act.ThoiGian_ThucHien), 'HH:mm dd/MM/yyyy') : ''}</span>
+                      </div>
                     </div>
                   </div>
                 ))}

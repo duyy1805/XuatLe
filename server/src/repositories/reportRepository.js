@@ -21,7 +21,11 @@ const reportRepository = {
     req.input('ID_NhaCungCap', sql.SmallInt, params.idNhaCungCap || null);
 
     const result = await req.execute('dbo.usp_XuatLe_Dashboard_Summary');
-    return result.recordset[0];
+    return {
+      summary: result.recordsets[0][0],
+      chart: result.recordsets[1],
+      activities: result.recordsets[2]
+    };
   },
 
   /**
