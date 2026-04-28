@@ -237,6 +237,26 @@ const yeuCauController = {
       next(err);
     }
   },
+
+  /**
+   * GET /api/yeu-cau/:id/item-history
+   * Query: idVatTu, idDonHangVatTu
+   */
+  async getItemHistory(req, res, next) {
+    try {
+      const idYeuCau = parseInt(req.params.id, 10);
+      const { idVatTu, idDonHangVatTu } = req.query;
+
+      const data = await yeuCauRepo.getItemReceiptHistory(
+        idYeuCau,
+        idVatTu ? parseInt(idVatTu, 10) : null,
+        idDonHangVatTu ? parseInt(idDonHangVatTu, 10) : null
+      );
+      return sendSuccess(res, data);
+    } catch (err) {
+      next(err);
+    }
+  },
 };
 
 module.exports = yeuCauController;

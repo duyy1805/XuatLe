@@ -41,4 +41,7 @@ router.get('/:id/doi-soat/xuat-nhap', doiSoatCtrl.doiSoatXuatNhap);
 // ─── Hao hụt ─────────────────────────────────────────────────────────────────
 router.put('/:id/hao-hut', doiSoatCtrl.updateHaoHut);
 
+// ─── Lịch sử nhập xuất vật tư ──────────────────────────────────────────────
+router.get('/:id/item-history', yeuCauCtrl.getItemHistory);
+
 module.exports = router;

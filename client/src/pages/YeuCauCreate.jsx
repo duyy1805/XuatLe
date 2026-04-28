@@ -261,6 +261,17 @@ export default function YeuCauCreate() {
       return;
     }
 
+    const today = new Date().toISOString().slice(0, 10);
+    if (formData.ngayDuKienXuat && formData.ngayDuKienXuat < today) {
+      toast.error('Ngày dự kiến xuất không được nhỏ hơn ngày hiện tại!');
+      return;
+    }
+
+    if (formData.deadlineHoanThanh && formData.ngayDuKienXuat && formData.deadlineHoanThanh < formData.ngayDuKienXuat) {
+      toast.error('Hạn hoàn thành không được nhỏ hơn ngày dự kiến xuất!');
+      return;
+    }
+
     const chiTietToSave = dsVatTu.filter(vt => vt.ID_VatTu && vt.SoLuong_DeNghi_Xuat > 0);
     if (chiTietToSave.length === 0) {
       toast.warning('Vui lòng thêm vật tư và nhập số lượng đề nghị xuất!');
@@ -383,6 +394,7 @@ export default function YeuCauCreate() {
                   type="date"
                   label="Ngày dự kiến xuất"
                   value={formData.ngayDuKienXuat}
+                  min={new Date().toISOString().slice(0, 10)}
                   onChange={e => setFormData({ ...formData, ngayDuKienXuat: e.target.value })}
                   wrapperClass="lg:col-span-2"
                 />
@@ -390,6 +402,7 @@ export default function YeuCauCreate() {
                   type="date"
                   label="Hạn hoàn thành"
                   value={formData.deadlineHoanThanh}
+                  min={formData.ngayDuKienXuat || new Date().toISOString().slice(0, 10)}
                   onChange={e => setFormData({ ...formData, deadlineHoanThanh: e.target.value })}
                   wrapperClass="lg:col-span-2"
                 />

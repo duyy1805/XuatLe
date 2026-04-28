@@ -65,6 +65,9 @@ export default function YeuCauDetail() {
   const [receiptItemsModal, setReceiptItemsModal] = useState({ isOpen: false, type: null, data: null, items: [] });
   const [receiptItemsLoading, setReceiptItemsLoading] = useState(false);
 
+  const [itemHistoryModal, setItemHistoryModal] = useState({ isOpen: false, item: null, history: [] });
+  const [itemHistoryLoading, setItemHistoryLoading] = useState(false);
+
   const fetchReceipts = useCallback(async () => {
     try {
       setReceiptsLoading(true);
@@ -180,6 +183,25 @@ export default function YeuCauDetail() {
       toast.error('Không thể tải chi tiết vật tư của phiếu');
     } finally {
       setReceiptItemsLoading(false);
+    }
+  };
+
+  const handleViewItemHistory = async (vt) => {
+    try {
+      setItemHistoryModal({ isOpen: true, item: vt, history: [] });
+      setItemHistoryLoading(true);
+      const res = await yeuCauApi.getItemHistory(id, {
+        idVatTu: vt.ID_VatTu,
+        idDonHangVatTu: vt.ID_DonHang_VatTu
+      });
+      if (res.success) {
+        setItemHistoryModal(prev => ({ ...prev, history: res.data }));
+      }
+    } catch (error) {
+      console.error('Lỗi khi tải lịch sử vật tư:', error);
+      toast.error('Không thể tải lịch sử nhập xuất của vật tư này');
+    } finally {
+      setItemHistoryLoading(false);
     }
   };
 
@@ -299,7 +321,12 @@ export default function YeuCauDetail() {
                     </thead>
                     <tbody>
                       {chiTiet.map((vt) => (
-                        <tr key={vt.ID_Dong}>
+                        <tr
+                          key={vt.ID_Dong}
+                          onClick={() => handleViewItemHistory(vt)}
+                          className="cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
+                          title="Nhấn để xem chi tiết lịch sử nhập xuất của vật tư này"
+                        >
                           <td className="font-medium text-blue-600">{vt.So_LenhSanXuat || '-'}</td>
                           <td className="font-semibold">{vt.Ma_VatTu}</td>
                           <td className="text-right">{vt.SoLuong_DeNghi_Xuat}</td>
@@ -490,6 +517,62 @@ export default function YeuCauDetail() {
 
           <div className="flex justify-end pt-2">
             <Button onClick={() => setReceiptItemsModal(prev => ({ ...prev, isOpen: false }))}>
+              Đóng
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Modal Lịch sử nhập xuất của 1 vật tư */}
+      <Modal
+        isOpen={itemHistoryModal.isOpen}
+        onClose={() => setItemHistoryModal(prev => ({ ...prev, isOpen: false }))}
+        title={`Lịch sử Giao nhận: ${itemHistoryModal.item?.Ma_VatTu || ''}`}
+        size="lg"
+      >
+        <div className="space-y-4">
+          <div className="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-lg border border-slate-100 dark:border-white/5">
+            <p className="text-sm font-semibold text-slate-900 dark:text-white">{itemHistoryModal.item?.Ten_VatTu}</p>
+            <p className="text-xs text-slate-500 mt-1">Lệnh SX: {itemHistoryModal.item?.So_LenhSanXuat || '-'}</p>
+          </div>
+
+          <TableContainer>
+            <Table>
+              <thead>
+                <tr>
+                  <th>Loại</th>
+                  <th>Số phiếu ERP</th>
+                  <th>Ngày</th>
+                  <th className="text-right">Số lượng</th>
+                  <th>Kho</th>
+                </tr>
+              </thead>
+              <tbody>
+                {itemHistoryLoading ? (
+                  <tr><td colSpan={5} className="text-center py-8">Đang tải lịch sử...</td></tr>
+                ) : itemHistoryModal.history.length === 0 ? (
+                  <tr><td colSpan={5} className="text-center py-8 text-slate-400">Chưa có lịch sử giao nhận cho vật tư này</td></tr>
+                ) : (
+                  itemHistoryModal.history.map((h, idx) => (
+                    <tr key={idx}>
+                      <td>
+                        <Badge variant={h.Loai === 'XUAT' ? 'primary' : 'success'}>
+                          {h.Loai === 'XUAT' ? 'XUẤT' : 'NHẬP'}
+                        </Badge>
+                      </td>
+                      <td className="font-medium">{h.SoPhieu}</td>
+                      <td>{h.Ngay ? format(new Date(h.Ngay), 'dd/MM/yyyy HH:mm') : '-'}</td>
+                      <td className="text-right font-bold">{h.SoLuong}</td>
+                      <td>{h.TenKho}</td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </Table>
+          </TableContainer>
+
+          <div className="flex justify-end pt-2">
+            <Button onClick={() => setItemHistoryModal(prev => ({ ...prev, isOpen: false }))}>
               Đóng
             </Button>
           </div>

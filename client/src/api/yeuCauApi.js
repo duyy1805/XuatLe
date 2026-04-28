@@ -41,6 +41,9 @@ const yeuCauApi = {
   unlinkLenhXuat: (id, idLenh) => {
     return axiosClient.delete(`/yeu-cau/${id}/lenh-xuat/${idLenh}`);
   },
+  getItemHistory: (id, params) => {
+    return axiosClient.get(`/yeu-cau/${id}/item-history`, { params });
+  },
   // Phiếu Xuất/Nhập (ERP sync)
   getPhieuXuat: (id) => {
     return axiosClient.get(`/yeu-cau/${id}/phieu-xuat`);

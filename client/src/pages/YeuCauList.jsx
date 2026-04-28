@@ -193,7 +193,7 @@ export default function YeuCauList() {
               <Table>
                 <thead>
                   <tr>
-                    <th>Mã YC</th>
+                    <th>Số YC</th>
                     <th>Ngày yêu cầu</th>
                     <th>Công đoạn lẻ</th>
                     {/* <th>Người tạo</th> */}
@@ -224,7 +224,7 @@ export default function YeuCauList() {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ type: 'spring', stiffness: 320, damping: 26, delay: index * 0.035 }}
                       >
-                        <td className="font-semibold text-blue-600">#{item.ID_XuatLe_YeuCau}</td>
+                        <td className="font-semibold text-blue-600">{item.So_YeuCau}</td>
                         <td>{item.Ngay_YeuCau ? format(new Date(item.Ngay_YeuCau), 'dd/MM/yyyy') : ''}</td>
                         <td className="font-medium">{item.Ten_CongDoanLe}</td>
                         {/* <td>{item.Ten_NguoiLap || item.TaiKhoan_Lap}</td> */}

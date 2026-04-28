@@ -164,6 +164,20 @@ const yeuCauRepository = {
     const result = await req.execute('dbo.usp_XuatLe_YeuCau_NhapLai');
     return result.recordset[0];
   },
+
+  /**
+   * Lịch sử nhập xuất của 1 vật tư trong yêu cầu.
+   */
+  async getItemReceiptHistory(idYeuCau, idVatTu, idDonHangVatTu) {
+    const pool = getPool();
+    const req = pool.request();
+    req.input('ID_XuatLe_YeuCau', sql.BigInt, idYeuCau);
+    req.input('ID_VatTu', sql.Int, idVatTu || null);
+    req.input('ID_DonHang_VatTu', sql.Int, idDonHangVatTu || null);
+
+    const result = await req.execute('dbo.usp_XuatLe_GetItemReceiptHistory');
+    return result.recordset;
+  },
 };
 
 module.exports = yeuCauRepository;
