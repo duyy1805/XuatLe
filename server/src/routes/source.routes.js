@@ -9,4 +9,10 @@ router.get('/ke-hoach', sourceCtrl.getKeHoachList);
 // GET /api/source/vat-tu?idKeHoachSanXuat=&idDonHangSanPham=  →  Vật tư theo kế hoạch
 router.get('/vat-tu', sourceCtrl.getVatTuByKeHoach);
 
+// GET /api/source/vat-tu-phoi →  Vật tư phôi
+router.get('/vat-tu-phoi', sourceCtrl.getVatTuPhoi);
+
+// GET /api/source/da-mo-phoi →  Đã mở phôi theo kế hoạch
+router.get('/da-mo-phoi', sourceCtrl.getDaMoPhoi);
+
 module.exports = router;

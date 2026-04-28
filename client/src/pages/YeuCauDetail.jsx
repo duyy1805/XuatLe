@@ -13,7 +13,6 @@ import yeuCauApi from '../api/yeuCauApi';
 import { format } from 'date-fns';
 import ModalNhapLai from './ModalNhapLai';
 import { Modal } from '../components/ui/Modal';
-import { Eye } from 'lucide-react';
 
 const STATUS_MAP = {
   0: { label: 'Nháp', variant: 'neutral' },
@@ -130,7 +129,7 @@ export default function YeuCauDetail() {
             idLuongQT: 2,
             lyDoXuat: 'Xuất theo yêu cầu ' + id,
             chiTiet: data.chiTiet.map(item => ({
-              ID_DonHang_VatTu: item.ID_DonHang_VatTu,
+              ID_DonHang_VatTu: item.ID_DonHang_VatTu || 0,
               ID_VatTu: item.ID_VatTu,
               DinhMuc_VatTu: item.DinhMuc_VatTu || 0,
               SoLuong_VatTu: item.SoLuong_DeNghi_Xuat
@@ -357,14 +356,16 @@ export default function YeuCauDetail() {
                         </thead>
                         <tbody>
                           {phieuXuatList.length > 0 ? phieuXuatList.map((px) => (
-                            <tr key={px.ID_XuatLe_PhieuXuat_Map}>
+                            <tr
+                              key={px.ID_XuatLe_PhieuXuat_Map}
+                              onClick={() => handleViewReceiptItems('xuat', px)}
+                              className="cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
+                              title="Nhấn để xem chi tiết phiếu xuất"
+                            >
                               <td className="font-bold text-blue-600">
-                                <button
-                                  onClick={() => handleViewReceiptItems('xuat', px)}
-                                  className="flex items-center gap-1 hover:underline"
-                                >
-                                  {px.So_PhieuXuatVT} <Eye size={12} />
-                                </button>
+                                <div className="flex items-center gap-1">
+                                  {px.So_PhieuXuatVT}
+                                </div>
                               </td>
                               <td>{px.Ngay_XuatVT ? format(new Date(px.Ngay_XuatVT), 'dd/MM/yyyy') : '-'}</td>
                               <td className="text-right font-semibold">{px.SoLuong_Xuat}</td>
@@ -396,14 +397,16 @@ export default function YeuCauDetail() {
                         </thead>
                         <tbody>
                           {phieuNhapList.length > 0 ? phieuNhapList.map((pn) => (
-                            <tr key={pn.ID_XuatLe_PhieuNhap_Map}>
+                            <tr
+                              key={pn.ID_XuatLe_PhieuNhap_Map}
+                              onClick={() => handleViewReceiptItems('nhap', pn)}
+                              className="cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
+                              title="Nhấn để xem chi tiết phiếu nhập"
+                            >
                               <td className="font-bold text-emerald-600">
-                                <button
-                                  onClick={() => handleViewReceiptItems('nhap', pn)}
-                                  className="flex items-center gap-1 hover:underline"
-                                >
-                                  {pn.So_PhieuNhapVT || 'Đang chờ...'} <Eye size={12} />
-                                </button>
+                                <div className="flex items-center gap-1">
+                                  {pn.So_PhieuNhapVT || 'Đang chờ...'}
+                                </div>
                               </td>
                               <td>{pn.Ngay_NhapVT ? format(new Date(pn.Ngay_NhapVT), 'dd/MM/yyyy') : '-'}</td>
                               <td className="text-right font-semibold">{pn.SoLuong_Nhap}</td>

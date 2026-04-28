@@ -8,6 +8,14 @@ const sourceApi = {
     return axiosClient.get('/source/vat-tu', {
       params: { idKeHoachSanXuat, idDonHangSanPham }
     });
+  },
+  getVatTuPhoi: () => {
+    return axiosClient.get('/source/vat-tu-phoi');
+  },
+  getDaMoPhoi: (idKeHoachSanXuat, idDonHangSanPham) => {
+    return axiosClient.get('/source/da-mo-phoi', {
+      params: { idKeHoachSanXuat, idDonHangSanPham }
+    });
   }
 };
 

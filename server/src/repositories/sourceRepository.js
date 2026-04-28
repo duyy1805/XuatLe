@@ -36,11 +36,46 @@ const sourceRepository = {
     const req = pool.request();
 
     req.input('ID_KeHoachSanXuat', sql.Int, idKeHoachSanXuat);
-    req.input('ID_DonHang_SanPham', sql.Int, idDonHangSanPham || null);
+    req.input('ID_DonHang_SanPham', sql.Int, idDonHangSanPham);
 
     const result = await req.execute('dbo.usp_XuatLe_Source_VatTu_GetByKeHoach');
     return result.recordset;
   },
+
+  /**
+   * Lấy danh sách vật tư Phôi.
+   * SP: usp_XuatLe_Source_VatTu_Phoi_GetList
+   */
+  async getVatTuPhoi() {
+    const pool = getPool();
+    const req = pool.request();
+
+    const result = await req.execute('dbo.usp_XuatLe_Source_VatTu_Phoi_GetList');
+    return result.recordset;
+  },
+
+  /**
+   * Lấy số lượng đã xuất của từng vật tư cho một kế hoạch cụ thể.
+   */
+  async getDaMoPhoi(idKeHoachSanXuat, idDonHangSanPham) {
+    const pool = getPool();
+    const req = pool.request();
+    req.input('ID_KeHoachSanXuat', sql.Int, idKeHoachSanXuat);
+    req.input('ID_DonHang_SanPham', sql.Int, idDonHangSanPham);
+    
+    const query = `
+      SELECT 
+        CT.ID_VatTu_Xuat,
+        SUM(CASE WHEN Y.TrangThai <> 9 THEN CT.SoLuong_DeNghi_Xuat ELSE 0 END) AS SoLuong_DaMo
+      FROM dbo.XuatLe_YeuCau_ChiTiet CT
+      INNER JOIN dbo.XuatLe_YeuCau Y ON Y.ID_XuatLe_YeuCau = CT.ID_XuatLe_YeuCau
+      WHERE CT.ID_KeHoachSanXuat = @ID_KeHoachSanXuat
+        AND (@ID_DonHang_SanPham IS NULL OR CT.ID_DonHang_SanPham = @ID_DonHang_SanPham)
+      GROUP BY CT.ID_VatTu_Xuat
+    `;
+    const result = await req.query(query);
+    return result.recordset;
+  }
 };
 
 module.exports = sourceRepository;

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardBody, CardHeader, CardTitle } from '../components/ui/Card';
@@ -71,6 +71,7 @@ function SearchableSelect({
     if (!isOpen || !inputRef.current) return;
 
     const updatePosition = () => {
+      if (!inputRef.current) return;
       const rect = inputRef.current.getBoundingClientRect();
       setDropdownStyle({
         position: 'fixed',
@@ -88,7 +89,7 @@ function SearchableSelect({
       window.removeEventListener('resize', updatePosition);
       window.removeEventListener('scroll', updatePosition, true);
     };
-  }, [isOpen, query]);
+  }, [isOpen]);
 
   return (
     <div className={['flex flex-col gap-1.5', wrapperClass].filter(Boolean).join(' ')}>
@@ -142,8 +143,8 @@ export default function YeuCauCreate() {
   const [dsCongDoan, setDsCongDoan] = useState([]);
   const [dsBoPhan, setDsBoPhan] = useState([]);
   const [dsVatTu, setDsVatTu] = useState([]);
-  const [vatTuByKeHoach, setVatTuByKeHoach] = useState({});
-  const [loadingRows, setLoadingRows] = useState({});
+  const [dsVatTuPhoi, setDsVatTuPhoi] = useState([]);
+
 
   const [formData, setFormData] = useState({
     idCongDoanLe: '',
@@ -158,10 +159,12 @@ export default function YeuCauCreate() {
   useEffect(() => {
     Promise.all([
       sourceApi.getKeHoach({}),
+      sourceApi.getVatTuPhoi(), // Fetch Phoi list
       dmApi.getCongDoanLe({}),
       dmApi.getBoPhan({})
-    ]).then(([resKh, resCd, resBp]) => {
+    ]).then(([resKh, resVt, resCd, resBp]) => {
       if (resKh.success) setDsKeHoach(resKh.data);
+      if (resVt.success) setDsVatTuPhoi(resVt.data);
       if (resCd.success) setDsCongDoan(resCd.data);
       if (resBp.success) setDsBoPhan(resBp.data);
     }).catch(() => {
@@ -169,49 +172,40 @@ export default function YeuCauCreate() {
     });
   }, []);
 
-  const getKeHoachLabel = (kh) => {
+  const getKeHoachLabel = useCallback((kh) => {
     return [kh.So_LenhSanXuat, kh.Ma_VatTu, kh.Ten_VatTu, `KH#${kh.ID_KeHoachSanXuat}`]
       .filter(Boolean)
       .join(' - ');
-  };
+  }, []);
 
-  const getBoPhanLabel = (bp) => {
+  const getBoPhanLabel = useCallback((bp) => {
     return [bp.Ma_NhaThau, bp.Ten_BoPhan].filter(Boolean).join(' - ');
-  };
+  }, []);
 
-  const getVatTuLabel = (vt) => {
+  const getVatTuLabel = useCallback((vt) => {
     return [vt.Ma_VatTu, vt.Ten_VatTu].filter(Boolean).join(' - ');
-  };
+  }, []);
 
-  const loadVatTuForKeHoach = async (rowId, selectedKh) => {
-    const key = selectedKh.ID_KeHoachSanXuat.toString();
-    if (vatTuByKeHoach[key]) return vatTuByKeHoach[key];
-
-    setLoadingRows(prev => ({ ...prev, [rowId]: true }));
-    try {
-      const res = await sourceApi.getVatTu(selectedKh.ID_KeHoachSanXuat, selectedKh?.ID_DonHangSanPham);
-      if (res.success) {
-        setVatTuByKeHoach(prev => ({ ...prev, [key]: res.data }));
-        if (res.data.length === 0) {
-          toast.info('Kế hoạch này không có vật tư nào để xuất');
-        }
-        return res.data;
-      }
-      return [];
-    } catch {
-      toast.error('Không thể tải danh sách vật tư');
-      return [];
-    } finally {
-      setLoadingRows(prev => ({ ...prev, [rowId]: false }));
-    }
-  };
-
-  const handleAddRow = () => {
+  const handleAddRow = useCallback(() => {
     setDsVatTu(prev => [...prev, createEmptyRow()]);
-  };
+  }, []);
 
-  const handleKeHoachChange = async (index, selectedKh) => {
-    const rowId = dsVatTu[index].__rowId;
+  const handleKeHoachChange = useCallback(async (index, selectedKh) => {
+    let daMoMap = {};
+    if (selectedKh) {
+      try {
+        const res = await sourceApi.getDaMoPhoi(selectedKh.ID_KeHoachSanXuat, selectedKh.ID_DonHang_SanPham);
+        if (res?.data) {
+          daMoMap = res.data.reduce((acc, curr) => {
+            acc[curr.ID_VatTu_Xuat] = curr.SoLuong_DaMo;
+            return acc;
+          }, {});
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
     setDsVatTu(prev => prev.map((row, rowIndex) => (
       rowIndex === index
         ? {
@@ -224,36 +218,47 @@ export default function YeuCauCreate() {
           ID_DonHang_LoSanXuat: selectedKh.ID_DonHang_LoSanXuat || null,
           Ma_VatTu_SP: selectedKh.Ma_VatTu,
           Ten_VatTu_SP: selectedKh.Ten_VatTu,
-          So_LenhSanXuat: selectedKh.So_LenhSanXuat
+          So_LenhSanXuat: selectedKh.So_LenhSanXuat,
+          SoLuong_KeHoach: selectedKh.SoLuong_KeHoach_CT || 0,
+          SoLuongConLai: selectedKh.SoLuong_KeHoach_CT || 0, // start with full plan qty
+          DaMoMap: daMoMap
         }
         : row
     )));
-    await loadVatTuForKeHoach(rowId, selectedKh);
-  };
+  }, []);
 
-  const handleVatTuChange = (index, selectedVt) => {
+  const handleVatTuChange = useCallback((index, selectedVt) => {
     setDsVatTu(prev => prev.map((row, rowIndex) => {
       if (rowIndex !== index) return row;
+      const daMo = (row.DaMoMap && selectedVt) ? (row.DaMoMap[selectedVt.ID_VatTu] || 0) : 0;
+      const conLai = row.SoLuong_KeHoach - daMo;
       return {
         ...row,
         ...selectedVt,
-        SoLuong_DeNghi_Xuat: selectedVt.SoLuongConLai > 0 ? selectedVt.SoLuongConLai : 0,
+        ID_DonHang_VatTu: 0, // Phoi materials don't belong to a specific plan's material list, use 0 as default
+        SoLuong_KeHoach: row.SoLuong_KeHoach, // Giữ lại số lượng của kế hoạch
+        SoLuongConLai: conLai, // Tính toán lại số lượng còn lại dựa trên vật tư đã xuất
+        SoLuong_DeNghi_Xuat: conLai > 0 ? conLai : 0,
         GhiChu_ChiTiet: row.GhiChu_ChiTiet || ''
       };
     }));
-  };
+  }, []);
 
-  const handleSoLuongChange = (index, value) => {
-    const newVatTu = [...dsVatTu];
-    newVatTu[index].SoLuong_DeNghi_Xuat = Number(value);
-    setDsVatTu(newVatTu);
-  };
+  const handleSoLuongChange = useCallback((index, value) => {
+    setDsVatTu(prev => {
+      const newVatTu = [...prev];
+      newVatTu[index].SoLuong_DeNghi_Xuat = Number(value);
+      return newVatTu;
+    });
+  }, []);
 
-  const handleRemoveVatTu = (index) => {
-    const newVatTu = [...dsVatTu];
-    newVatTu.splice(index, 1);
-    setDsVatTu(newVatTu);
-  };
+  const handleRemoveVatTu = useCallback((index) => {
+    setDsVatTu(prev => {
+      const newVatTu = [...prev];
+      newVatTu.splice(index, 1);
+      return newVatTu;
+    });
+  }, []);
 
   const handleSave = async (isConfirm = false) => {
     if (!formData.idCongDoanLe) {
@@ -455,8 +460,8 @@ export default function YeuCauCreate() {
                       </tr>
                     ) : (
                       dsVatTu.map((vt, index) => {
-                        const rowVatTuOptions = vatTuByKeHoach[vt.ID_KeHoachSanXuat?.toString()] || [];
-                        const isLoadingRow = loadingRows[vt.__rowId];
+                        const rowVatTuOptions = dsVatTuPhoi || [];
+                        const isLoadingRow = false;
 
                         return (
                           <motion.tr
