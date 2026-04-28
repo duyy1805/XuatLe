@@ -5,7 +5,7 @@ import { Table, TableContainer } from '../components/ui/Table';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
 import { TableSkeleton } from '../components/ui/Skeleton';
-import { Plus, Eye, Inbox, Search, Filter, RotateCcw } from 'lucide-react';
+import { Plus, Eye, Inbox, Search, RotateCcw } from 'lucide-react';
 import { Input, Select } from '../components/ui/Input';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
@@ -125,7 +125,7 @@ export default function YeuCauList() {
           <CardHeader>
             <div className="flex flex-col gap-1">
               <CardTitle>Danh sách yêu cầu xuất lẻ</CardTitle>
-              <p className="text-sm text-slate-500">Theo dõi tiến độ xuất nhập vật tư lẻ</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400">Theo dõi tiến độ xuất nhập vật tư lẻ</p>
             </div>
             <Button onClick={() => navigate('/yeu-cau/tao-moi')}>
               <Plus size={16} /> Tạo mới
@@ -133,21 +133,21 @@ export default function YeuCauList() {
           </CardHeader>
           <CardBody className="flex flex-col gap-6">
             {/* Filter Section */}
-            <form onSubmit={handleSearch} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 rounded-xl border border-slate-100 bg-slate-50/50 p-4">
+            <form onSubmit={handleSearch} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 rounded-xl border border-slate-100 bg-slate-50/50 p-4 dark:border-white/5 dark:bg-white/5">
               <Input
                 label="Tìm kiếm"
                 placeholder="Mã yêu cầu..."
                 name="keyword"
                 value={filters.keyword}
                 onChange={handleFilterChange}
-                className="bg-white"
+                className="bg-white dark:bg-slate-950"
               />
               <Select
                 label="Trạng thái"
                 name="trangThai"
                 value={filters.trangThai}
                 onChange={handleFilterChange}
-                className="bg-white"
+                className="bg-white dark:bg-slate-950"
               >
                 <option value="">Tất cả</option>
                 <option value="0">Nháp</option>
@@ -167,7 +167,7 @@ export default function YeuCauList() {
                 name="tuNgay"
                 value={filters.tuNgay}
                 onChange={handleFilterChange}
-                className="bg-white"
+                className="bg-white dark:bg-slate-950"
                 wrapperClass="gap-1"
               />
               <Input
@@ -176,7 +176,7 @@ export default function YeuCauList() {
                 name="denNgay"
                 value={filters.denNgay}
                 onChange={handleFilterChange}
-                className="bg-white"
+                className="bg-white dark:bg-slate-950"
                 wrapperClass="gap-1"
               />
               <div className="flex items-end gap-2 pb-0.5">
@@ -208,7 +208,7 @@ export default function YeuCauList() {
                   ) : list.length === 0 ? (
                     <tr>
                       <td colSpan="7">
-                        <div className="flex flex-col items-center justify-center py-12 text-slate-500">
+                        <div className="flex flex-col items-center justify-center py-12 text-slate-500 dark:text-slate-400">
                           <Inbox size={48} className="mb-4 opacity-20" />
                           <p>Không có dữ liệu yêu cầu nào</p>
                         </div>
@@ -227,16 +227,33 @@ export default function YeuCauList() {
                         <td className="font-medium">{item.Ten_CongDoanLe}</td>
                         <td>{item.TaiKhoan_Lap}</td>
                         <td>
-                          <div className="flex items-center gap-4">
-                            <div className="flex flex-col gap-1 min-w-[100px]">
-                              <div className="flex justify-between text-[10px] font-medium uppercase text-slate-500">
+                          <div className="flex flex-col gap-2.5 min-w-[120px] py-1">
+                            {/* Tiến độ Xuất */}
+                            <div className="flex flex-col gap-1">
+                              <div className="flex justify-between text-[9px] font-bold uppercase text-blue-600/80 dark:text-blue-400/80">
                                 <span>Xuất: {item.SoLuong_DaXuat || 0}</span>
-                                <span>Nhập: {item.SoLuong_DaNhap || 0}</span>
+                                <span>{Math.round(((item.SoLuong_DaXuat || 0) / (item.SoLuong_DeNghi_Xuat || 1)) * 100)}%</span>
                               </div>
-                              <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
-                                <div
-                                  className="h-full bg-blue-500 transition-all duration-500"
-                                  style={{ width: `${Math.min(((item.SoLuong_DaXuat || 0) / (item.SoLuong_DeNghi || 1)) * 100, 100)}%` }}
+                              <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+                                <motion.div
+                                  initial={{ width: 0 }}
+                                  animate={{ width: `${Math.min(((item.SoLuong_DaXuat || 0) / (item.SoLuong_DeNghi_Xuat || 1)) * 100, 100)}%` }}
+                                  className="h-full bg-blue-500"
+                                />
+                              </div>
+                            </div>
+                            
+                            {/* Tiến độ Nhập */}
+                            <div className="flex flex-col gap-1">
+                              <div className="flex justify-between text-[9px] font-bold uppercase text-emerald-600/80 dark:text-emerald-400/80">
+                                <span>Nhập: {item.SoLuong_DaNhap || 0}</span>
+                                <span>{Math.round(((item.SoLuong_DaNhap || 0) / (item.SoLuong_DeNghi_Xuat || 1)) * 100)}%</span>
+                              </div>
+                              <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+                                <motion.div
+                                  initial={{ width: 0 }}
+                                  animate={{ width: `${Math.min(((item.SoLuong_DaNhap || 0) / (item.SoLuong_DeNghi_Xuat || 1)) * 100, 100)}%` }}
+                                  className="h-full bg-emerald-500"
                                 />
                               </div>
                             </div>

@@ -2,8 +2,8 @@ import { forwardRef } from 'react';
 import clsx from 'clsx';
 
 const wrapperClassName = 'flex flex-col gap-1.5';
-const labelClassName = 'text-sm font-medium text-slate-900';
-const inputClassName = 'w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 shadow-[inset_0_1px_2px_rgba(0,0,0,0.02)] outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-600/10 disabled:cursor-not-allowed disabled:border-slate-100 disabled:bg-slate-50 disabled:text-slate-500';
+const labelClassName = 'text-sm font-medium text-slate-900 dark:text-white';
+const inputClassName = 'w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 shadow-[inset_0_1px_2px_rgba(0,0,0,0.02)] outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-600/10 disabled:cursor-not-allowed disabled:border-slate-100 disabled:bg-slate-50 disabled:text-slate-500 dark:border-white/10 dark:bg-slate-950 dark:text-white dark:hover:border-white/20 dark:focus:border-blue-500 dark:disabled:bg-slate-900 dark:disabled:text-slate-500';
 
 export const Input = forwardRef(({ label, className, wrapperClass, ...props }, ref) => {
   return (

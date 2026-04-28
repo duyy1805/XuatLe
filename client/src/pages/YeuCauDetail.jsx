@@ -5,7 +5,7 @@ import { Table, TableContainer } from '../components/ui/Table';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
 import { Skeleton } from '../components/ui/Skeleton';
-import { ArrowLeft, CheckCircle, Send, XCircle, Box, Calendar, User } from 'lucide-react';
+import { ArrowLeft, CheckCircle, Box, Calendar, User } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { useConfirm } from '../hooks/useConfirm';
@@ -141,7 +141,7 @@ export default function YeuCauDetail() {
 
   if (!data || !data.header) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 text-slate-500">
+      <div className="flex flex-col items-center justify-center py-20 text-slate-500 dark:text-slate-400">
         <p>Không tìm thấy dữ liệu yêu cầu</p>
         <Button variant="outline" className="mt-4" onClick={() => navigate('/yeu-cau')}>Quay lại danh sách</Button>
       </div>
@@ -158,20 +158,20 @@ export default function YeuCauDetail() {
       animate="visible"
     >
       {/* Premium Header Layout */}
-      <motion.div variants={itemVariants} className="flex flex-col justify-between gap-4 rounded-2xl border border-white/30 bg-white/70 p-6 backdrop-blur-md md:flex-row md:items-start">
+      <motion.div variants={itemVariants} className="flex flex-col justify-between gap-4 rounded-2xl border border-white/30 bg-white/70 p-6 backdrop-blur-md dark:border-white/10 dark:bg-slate-900/70 md:flex-row md:items-start">
         <div>
           <div className="flex items-center gap-3 mb-2">
-            <Button variant="outline" size="sm" onClick={() => navigate('/yeu-cau')} className="bg-white">
+            <Button variant="outline" size="sm" onClick={() => navigate('/yeu-cau')} className="bg-white dark:bg-slate-900">
               <ArrowLeft size={16} />
             </Button>
             <Badge variant={STATUS_MAP[header.TrangThai]?.variant || 'neutral'} className="text-sm px-3 py-1">
               {STATUS_MAP[header.TrangThai]?.label || header.TrangThai}
             </Badge>
           </div>
-          <h2 className="text-2xl font-bold tracking-tight text-slate-900">
+          <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
             Yêu cầu xuất lẻ #{header.ID_XuatLe_YeuCau}
           </h2>
-          <p className="mt-1 flex items-center gap-2 text-slate-500">
+          <p className="mt-1 flex items-center gap-2 text-slate-500 dark:text-slate-400">
             <Calendar size={14} /> {header.NgayYeuCau ? format(new Date(header.NgayYeuCau), 'dd/MM/yyyy HH:mm') : ''}
           </p>
         </div>
@@ -191,7 +191,7 @@ export default function YeuCauDetail() {
 
 
           {(header.TrangThai === 0 || header.TrangThai === 1) && (
-            <Button variant="outline" className="border-red-600 text-red-600 hover:bg-red-50" onClick={() => handleAction('cancel', 'Huỷ')} isLoading={actionLoading}>
+            <Button variant="outline" className="border-red-600 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20" onClick={() => handleAction('cancel', 'Huỷ')} isLoading={actionLoading}>
               Huỷ YC
             </Button>
           )}
@@ -242,18 +242,18 @@ export default function YeuCauDetail() {
             </CardHeader>
             <CardBody className="flex flex-col gap-5">
               <div className="flex gap-3">
-                <div className="mt-0.5 text-slate-500"><Box size={18} /></div>
+                <div className="mt-0.5 text-slate-500 dark:text-slate-400"><Box size={18} /></div>
                 <div>
-                  <div className="text-xs font-medium uppercase tracking-wider text-slate-500">Công đoạn lẻ</div>
-                  <div className="mt-0.5 font-semibold text-slate-900">{header.Ten_CongDoanLe}</div>
+                  <div className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">Công đoạn lẻ</div>
+                  <div className="mt-0.5 font-semibold text-slate-900 dark:text-white">{header.Ten_CongDoanLe}</div>
                 </div>
               </div>
 
               <div className="flex gap-3">
-                <div className="mt-0.5 text-slate-500"><User size={18} /></div>
+                <div className="mt-0.5 text-slate-500 dark:text-slate-400"><User size={18} /></div>
                 <div>
-                  <div className="text-xs font-medium uppercase tracking-wider text-slate-500">Người tạo</div>
-                  <div className="mt-0.5 font-semibold text-slate-900">{header.TaiKhoan_Lap}</div>
+                  <div className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">Người tạo</div>
+                  <div className="mt-0.5 font-semibold text-slate-900 dark:text-white">{header.TaiKhoan_Lap}</div>
                 </div>
               </div>
             </CardBody>

@@ -92,7 +92,7 @@ function SearchableSelect({
 
   return (
     <div className={['flex flex-col gap-1.5', wrapperClass].filter(Boolean).join(' ')}>
-      {label && <label className="text-sm font-medium text-slate-900">{label}</label>}
+      {label && <label className="text-sm font-medium text-slate-900 dark:text-white">{label}</label>}
       <div className={`relative ${className || ''}`}>
         <input
           ref={inputRef}
@@ -105,12 +105,12 @@ function SearchableSelect({
             setIsOpen(true);
           }}
           onBlur={() => window.setTimeout(() => setIsOpen(false), 120)}
-          className="h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-600/10 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400"
+          className="h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-600/10 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400 dark:border-white/10 dark:bg-slate-950 dark:text-white dark:hover:border-white/20 dark:focus:border-blue-500 dark:disabled:bg-slate-900"
         />
         {isOpen && !disabled && createPortal(
           <div
             style={dropdownStyle}
-            className="z-[9999] max-h-60 overflow-auto rounded-lg border border-slate-200 bg-white py-1 text-sm shadow-xl"
+            className="z-[9999] max-h-60 overflow-auto rounded-lg border border-slate-200 bg-white py-1 text-sm shadow-xl dark:border-white/10 dark:bg-slate-900 dark:shadow-none"
           >
             {filteredOptions.length > 0 ? (
               filteredOptions.map(option => (
@@ -119,13 +119,13 @@ function SearchableSelect({
                   type="button"
                   onMouseDown={(event) => event.preventDefault()}
                   onClick={() => handleSelect(option)}
-                  className="block w-full px-3 py-2 text-left text-slate-700 transition hover:bg-blue-50 hover:text-blue-700"
+                  className="block w-full px-3 py-2 text-left text-slate-700 transition hover:bg-blue-50 hover:text-blue-700 dark:text-slate-300 dark:hover:bg-blue-900/30 dark:hover:text-blue-400"
                 >
                   {getLabel(option)}
                 </button>
               ))
             ) : (
-              <div className="px-3 py-2 text-slate-500">Không tìm thấy dữ liệu phù hợp</div>
+              <div className="px-3 py-2 text-slate-500 dark:text-slate-400">Không tìm thấy dữ liệu phù hợp</div>
             )}
           </div>,
           document.body
@@ -320,12 +320,12 @@ export default function YeuCauCreate() {
       initial="hidden"
       animate="visible"
     >
-      <motion.div variants={itemVariants} className="flex items-center justify-between rounded-2xl border border-white/30 bg-white/70 p-4 backdrop-blur-md">
+      <motion.div variants={itemVariants} className="flex items-center justify-between rounded-2xl border border-white/30 bg-white/70 p-4 backdrop-blur-md dark:border-white/10 dark:bg-slate-900/70">
         <div className="flex items-center gap-3">
-          <Button variant="outline" size="sm" onClick={() => navigate(-1)} className="bg-white">
+          <Button variant="outline" size="sm" onClick={() => navigate(-1)} className="bg-white dark:bg-slate-900">
             <ArrowLeft size={16} /> Quay lại
           </Button>
-          <h2 className="flex items-center gap-2 text-xl font-bold tracking-tight text-slate-900">
+          <h2 className="flex items-center gap-2 text-xl font-bold tracking-tight text-slate-900 dark:text-white">
             <PackagePlus size={20} className="text-blue-600" /> Tạo Yêu cầu Xuất lẻ
           </h2>
         </div>
@@ -408,10 +408,10 @@ export default function YeuCauCreate() {
 
         <motion.div variants={itemVariants}>
           <Card className="flex flex-col">
-            <CardHeader className="flex flex-row items-center justify-between gap-4 border-b pb-4">
+            <CardHeader className="flex flex-row items-center justify-between gap-4 border-b pb-4 dark:border-white/10">
               <div>
                 <CardTitle>Danh sách vật tư đề nghị xuất</CardTitle>
-                <p className="mt-1 text-sm text-slate-500">Thêm từng dòng, chọn kế hoạch rồi chọn vật tư tương ứng trong kế hoạch đó.</p>
+                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Thêm từng dòng, chọn kế hoạch rồi chọn vật tư tương ứng trong kế hoạch đó.</p>
               </div>
               <Button onClick={handleAddRow} className="mb-1 shrink-0">
                 <Plus size={16} /> Thêm dòng
@@ -422,7 +422,7 @@ export default function YeuCauCreate() {
                 <Table>
                   <thead>
                     <tr>
-                      <th className="w-8 border-b bg-slate-50"></th>
+                      <th className="w-8 border-b bg-slate-50 dark:border-white/10 dark:bg-slate-950"></th>
                       <th className="min-w-[260px] border-b bg-slate-50">Kế hoạch</th>
                       <th className="min-w-[260px] border-b bg-slate-50">Vật tư</th>
                       <th className="border-b bg-slate-50 text-right">SL kế hoạch</th>
@@ -434,7 +434,7 @@ export default function YeuCauCreate() {
                     {dsVatTu.length === 0 ? (
                       <tr>
                         <td colSpan="6">
-                          <div className="flex flex-col items-center justify-center py-20 text-slate-500">
+                          <div className="flex flex-col items-center justify-center py-20 text-slate-500 dark:text-slate-400">
                             <PackagePlus size={48} className="mb-4 opacity-20" />
                             <p>Chưa có dòng vật tư nào. Nhấn “Thêm dòng” để bắt đầu.</p>
                           </div>
@@ -455,7 +455,7 @@ export default function YeuCauCreate() {
                             <td className="text-center">
                               <button
                                 onClick={() => handleRemoveVatTu(index)}
-                                className="rounded p-1 text-slate-500 transition-colors hover:bg-red-50 hover:text-red-600"
+                                className="rounded p-1 text-slate-500 transition-colors hover:bg-red-50 hover:text-red-600 dark:text-slate-400 dark:hover:bg-red-900/30 dark:hover:text-red-400"
                                 title="Xóa dòng"
                               >
                                 <Trash2 size={16} />

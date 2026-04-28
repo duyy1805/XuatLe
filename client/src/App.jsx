@@ -3,6 +3,7 @@ import { Toaster } from 'sonner';
 import { AppLayout } from './components/layout/AppLayout';
 import { ConfirmProvider } from './contexts/ConfirmContext';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { ThemeProvider } from './contexts/ThemeContext';
 
 // Pages
 import Dashboard from './pages/Dashboard';
@@ -32,30 +33,32 @@ function RequireAuth({ children }) {
 
 function App() {
   return (
-    <AuthProvider>
-      <ConfirmProvider>
-        <BrowserRouter>
-          <Routes>
-            <Route path="/login" element={<Login />} />
-            <Route
-              path="/"
-              element={
-                <RequireAuth>
-                  <AppLayout />
-                </RequireAuth>
-              }
-            >
-              <Route index element={<Dashboard />} />
-              <Route path="yeu-cau" element={<YeuCauList />} />
-              <Route path="yeu-cau/tao-moi" element={<YeuCauCreate />} />
-              <Route path="yeu-cau/:id" element={<YeuCauDetail />} />
-              <Route path="bao-cao" element={<div>Báo cáo đang phát triển...</div>} />
-            </Route>
-          </Routes>
-          <Toaster position="top-right" richColors />
-        </BrowserRouter>
-      </ConfirmProvider>
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <ConfirmProvider>
+          <BrowserRouter>
+            <Routes>
+              <Route path="/login" element={<Login />} />
+              <Route
+                path="/"
+                element={
+                  <RequireAuth>
+                    <AppLayout />
+                  </RequireAuth>
+                }
+              >
+                <Route index element={<Dashboard />} />
+                <Route path="yeu-cau" element={<YeuCauList />} />
+                <Route path="yeu-cau/tao-moi" element={<YeuCauCreate />} />
+                <Route path="yeu-cau/:id" element={<YeuCauDetail />} />
+                <Route path="bao-cao" element={<div>Báo cáo đang phát triển...</div>} />
+              </Route>
+            </Routes>
+            <Toaster position="top-right" richColors />
+          </BrowserRouter>
+        </ConfirmProvider>
+      </AuthProvider>
+    </ThemeProvider>
   );
 }
 

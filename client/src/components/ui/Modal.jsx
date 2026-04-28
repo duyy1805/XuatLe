@@ -33,22 +33,22 @@ export function Modal({ isOpen, onClose, title, children, footer, size = 'md' })
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
           transition={{ duration: 0.2 }}
-          className={clsx('flex max-h-[90vh] w-full flex-col overflow-hidden rounded-2xl bg-white shadow-lg', sizes[size])}
+          className={clsx('flex max-h-[90vh] w-full flex-col overflow-hidden rounded-2xl bg-white shadow-lg dark:bg-slate-900', sizes[size])}
           onClick={(e) => e.stopPropagation()}
         >
-          <div className="flex items-center justify-between border-b border-slate-100 px-6 py-5">
-            <h2 className="text-xl font-semibold text-slate-900">{title}</h2>
-            <button className="text-slate-500 transition hover:text-slate-900" onClick={onClose}>
+          <div className="flex items-center justify-between border-b border-slate-100 px-6 py-5 dark:border-white/10">
+            <h2 className="text-xl font-semibold text-slate-900 dark:text-white">{title}</h2>
+            <button className="text-slate-500 transition hover:text-slate-900 dark:hover:text-white" onClick={onClose}>
               <X size={20} />
             </button>
           </div>
           
-          <div className="overflow-y-auto p-6">
+          <div className="overflow-y-auto p-6 text-slate-900 dark:text-slate-300">
             {children}
           </div>
 
           {footer && (
-            <div className="flex justify-end gap-3 border-t border-slate-100 bg-slate-50 px-6 py-4">
+            <div className="flex justify-end gap-3 border-t border-slate-100 bg-slate-50 px-6 py-4 dark:border-white/10 dark:bg-slate-950">
               {footer}
             </div>
           )}

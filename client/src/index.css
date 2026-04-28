@@ -1,1 +1,8 @@
 @import "tailwindcss";
+
+@theme {
+  --dark-mode: selector;
+}
+
+/* Fallback for manual dark mode in v4 */
+@variant dark (&:where(.dark, .dark *));
