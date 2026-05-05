@@ -73,11 +73,20 @@ function SearchableSelect({
     const updatePosition = () => {
       if (!inputRef.current) return;
       const rect = inputRef.current.getBoundingClientRect();
+      const dropdownHeight = 240; // match max-h-60 (approx 240px)
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const spaceAbove = rect.top;
+      const showAbove = spaceBelow < dropdownHeight && spaceAbove > spaceBelow;
+
+      const preferredWidth = 500;
+      const availableSpaceRight = window.innerWidth - rect.left - 16;
+      const finalWidth = Math.max(rect.width, Math.min(preferredWidth, availableSpaceRight));
+
       setDropdownStyle({
         position: 'fixed',
-        top: rect.bottom + 4,
         left: rect.left,
-        width: rect.width
+        width: finalWidth,
+        ...(showAbove ? { bottom: window.innerHeight - rect.top + 4 } : { top: rect.bottom + 4 })
       });
     };
 
@@ -185,6 +194,10 @@ export default function YeuCauCreate() {
 
   const getBoPhanLabel = useCallback((bp) => {
     return [bp.Ma_NhaThau, bp.Ten_BoPhan].filter(Boolean).join(' - ');
+  }, []);
+
+  const getCongDoanLabel = useCallback((cd) => {
+    return [cd.Ma_CongDoanLe, cd.Ten_CongDoanLe].filter(Boolean).join(' - ');
   }, []);
 
   const getVatTuLabel = useCallback((vt) => {
@@ -371,19 +384,16 @@ export default function YeuCauCreate() {
             </CardHeader>
             <CardBody>
               <div className="grid grid-cols-1 gap-5 lg:grid-cols-6">
-                <Select
+                <SearchableSelect
                   label="Công đoạn lẻ (*)"
                   value={formData.idCongDoanLe}
-                  onChange={e => setFormData({ ...formData, idCongDoanLe: e.target.value })}
+                  options={dsCongDoan}
+                  getValue={cd => cd.ID_CongDoanLe}
+                  getLabel={getCongDoanLabel}
+                  placeholder="Nhập để tìm công đoạn..."
+                  onChange={cd => setFormData({ ...formData, idCongDoanLe: cd.ID_CongDoanLe })}
                   wrapperClass="lg:col-span-3"
-                >
-                  <option value="">-- Chọn Công đoạn --</option>
-                  {dsCongDoan.map(cd => (
-                    <option key={cd.ID_CongDoanLe} value={cd.ID_CongDoanLe}>
-                      {cd.Ma_CongDoanLe} - {cd.Ten_CongDoanLe}
-                    </option>
-                  ))}
-                </Select>
+                />
 
                 <SearchableSelect
                   label="Bộ phận nhận"
