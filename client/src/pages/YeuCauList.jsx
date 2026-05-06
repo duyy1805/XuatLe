@@ -11,6 +11,7 @@ import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import yeuCauApi from '../api/yeuCauApi';
 import { format } from 'date-fns';
+import { useAuth } from '../contexts/AuthContext';
 
 const STATUS_MAP = {
   0: { label: 'Nháp', variant: 'neutral' },
@@ -52,6 +53,7 @@ export default function YeuCauList() {
     denNgay: ''
   });
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const fetchList = useCallback(async (isInitial = false) => {
     try {
@@ -125,7 +127,9 @@ export default function YeuCauList() {
           <CardHeader>
             <div className="flex flex-col gap-1">
               <CardTitle>Danh sách yêu cầu xuất lẻ</CardTitle>
-              <p className="text-sm text-slate-500 dark:text-slate-400">Theo dõi tiến độ xuất nhập vật tư lẻ</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400">
+                {user?.isAdmin ? 'Theo dõi toàn bộ tiến độ xuất nhập vật tư lẻ' : 'Theo dõi tiến độ xuất nhập vật tư lẻ của bạn'}
+              </p>
             </div>
             <Button onClick={() => navigate('/yeu-cau/tao-moi')}>
               <Plus size={16} /> Tạo mới
@@ -196,7 +200,7 @@ export default function YeuCauList() {
                     <th>Số YC</th>
                     <th>Ngày yêu cầu</th>
                     <th>Công đoạn lẻ</th>
-                    {/* <th>Người tạo</th> */}
+                    <th>Người tạo</th>
                     <th>Tiến độ (Xuất/Nhập)</th>
                     <th>Bộ phận</th>
                     <th>Hạn hoàn thành</th>
@@ -227,7 +231,7 @@ export default function YeuCauList() {
                         <td className="font-semibold text-blue-600">{item.So_YeuCau}</td>
                         <td>{item.Ngay_YeuCau ? format(new Date(item.Ngay_YeuCau), 'dd/MM/yyyy') : ''}</td>
                         <td className="font-medium">{item.Ten_CongDoanLe}</td>
-                        {/* <td>{item.Ten_NguoiLap || item.TaiKhoan_Lap}</td> */}
+                        <td className="text-sm">{item.TenDayDu || item.TaiKhoan_Lap}</td>
                         <td>
                           <div className="flex flex-col gap-2.5 min-w-[120px] py-1">
                             {/* Tiến độ Xuất */}

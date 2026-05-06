@@ -41,6 +41,7 @@ const authController = {
         tenDayDu: result.TenDayDu,
         idDonVi: result.ID_DonVi,
         idBoPhan: result.ID_BoPhan,
+        isAdmin: result.ID_TaiKhoanDangNhap === 1 || result.TenDangNhap.toLowerCase() === 'admin',
       };
 
       const token = jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });

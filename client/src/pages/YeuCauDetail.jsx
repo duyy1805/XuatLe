@@ -5,10 +5,11 @@ import { Table, TableContainer } from '../components/ui/Table';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
 import { Skeleton } from '../components/ui/Skeleton';
-import { ArrowLeft, CheckCircle, Box, Calendar, User } from 'lucide-react';
+import { ArrowLeft, CheckCircle, Box, Calendar, User, ClipboardList } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { useConfirm } from '../hooks/useConfirm';
+import { useAuth } from '../contexts/AuthContext';
 import yeuCauApi from '../api/yeuCauApi';
 import { format } from 'date-fns';
 import ModalNhapLai from './ModalNhapLai';
@@ -56,10 +57,13 @@ export default function YeuCauDetail() {
   const [isNhapLaiModalOpen, setIsNhapLaiModalOpen] = useState(false);
   const [nhapLaiLoading, setNhapLaiLoading] = useState(false);
 
+  const [lenhXuatList, setLenhXuatList] = useState([]);
   const [phieuXuatList, setPhieuXuatList] = useState([]);
   const [phieuNhapList, setPhieuNhapList] = useState([]);
   const [receiptsLoading, setReceiptsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('summary'); // 'summary' | 'receipts'
+
+  const { user } = useAuth();
 
   const [receiptItemsModal, setReceiptItemsModal] = useState({ isOpen: false, type: null, data: null, items: [] });
   const [receiptItemsLoading, setReceiptItemsLoading] = useState(false);
@@ -70,10 +74,12 @@ export default function YeuCauDetail() {
   const fetchReceipts = useCallback(async () => {
     try {
       setReceiptsLoading(true);
-      const [resXuat, resNhap] = await Promise.all([
+      const [resLenh, resXuat, resNhap] = await Promise.all([
+        yeuCauApi.getLenhXuat(id),
         yeuCauApi.getPhieuXuat(id),
         yeuCauApi.getPhieuNhap(id)
       ]);
+      if (resLenh.success) setLenhXuatList(resLenh.data);
       if (resXuat.success) setPhieuXuatList(resXuat.data);
       if (resNhap.success) setPhieuNhapList(resNhap.data);
     } catch (error) {
@@ -226,6 +232,7 @@ export default function YeuCauDetail() {
   }
 
   const { header, chiTiet } = data;
+  const isCreator = user?.id === header?.TaiKhoan_Lap;
 
   return (
     <motion.div
@@ -254,26 +261,26 @@ export default function YeuCauDetail() {
         </div>
 
         <div className="flex flex-wrap gap-2">
-          {(header.TrangThai === 0 || header.TrangThai === 1) && (
+          {isCreator && (header.TrangThai === 0 || header.TrangThai === 1) && (
             <Button onClick={() => handleAction('submit', 'Xác nhận')} isLoading={actionLoading}>
               <CheckCircle size={16} /> Xác nhận
             </Button>
           )}
 
-          {header.TrangThai === 2 && (
+          {isCreator && header.TrangThai === 2 && (
             <Button variant="primary" onClick={() => handleAction('createLenh', 'Tạo lệnh xuất ERP')} isLoading={actionLoading}>
               <Box size={16} /> Tạo Lệnh ERP
             </Button>
           )}
 
-          {[4, 5, 6].includes(header.TrangThai) && (
+          {isCreator && [4, 5, 6].includes(header.TrangThai) && (
             <Button variant="primary" onClick={() => setIsNhapLaiModalOpen(true)}>
               <Box size={16} /> Nhập lại vật tư
             </Button>
           )}
 
 
-          {(header.TrangThai === 0 || header.TrangThai === 1) && (
+          {isCreator && (header.TrangThai === 0 || header.TrangThai === 1) && (
             <Button variant="outline" className="border-red-600 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20" onClick={() => handleAction('cancel', 'Huỷ')} isLoading={actionLoading}>
               Huỷ YC
             </Button>
@@ -297,7 +304,7 @@ export default function YeuCauDetail() {
                   onClick={() => setActiveTab('receipts')}
                   className={`text-lg font-bold pb-1 border-b-2 transition-colors ${activeTab === 'receipts' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-400 hover:text-slate-600'}`}
                 >
-                  Lịch sử Giao nhận ({phieuXuatList.length + phieuNhapList.length})
+                  Lịch sử Giao nhận ({lenhXuatList.length + phieuXuatList.length + phieuNhapList.length})
                 </button>
               </div>
               {/* <Button variant="ghost" size="sm" onClick={fetchReceipts} isLoading={receiptsLoading}>
@@ -339,6 +346,40 @@ export default function YeuCauDetail() {
                 </TableContainer>
               ) : (
                 <div className="space-y-8">
+                  <div>
+                    <h4 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-4 flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-indigo-500" /> Lệnh xuất vật tư ({lenhXuatList.length})
+                    </h4>
+                    <TableContainer>
+                      <Table>
+                        <thead>
+                          <tr>
+                            <th>Số lệnh ERP</th>
+                            <th>Ngày lệnh</th>
+                            <th>Trạng thái đồng bộ</th>
+                            <th>Ghi chú</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {lenhXuatList.length > 0 ? lenhXuatList.map((lx) => (
+                            <tr key={lx.ID_XuatLe_LenhXuat_Map}>
+                              <td className="font-bold text-indigo-600">{lx.So_LenhXuatVT}</td>
+                              <td>{lx.Ngay_LenhXuatVT ? format(new Date(lx.Ngay_LenhXuatVT), 'dd/MM/yyyy') : '-'}</td>
+                              <td>
+                                <Badge variant={lx.TrangThaiDongBo === 1 ? 'success' : 'warning'}>
+                                  {lx.TrangThaiDongBo === 1 ? 'Đã đồng bộ' : 'Chờ đồng bộ'}
+                                </Badge>
+                              </td>
+                              <td className="text-xs text-slate-500">{lx.GhiChu || '-'}</td>
+                            </tr>
+                          )) : (
+                            <tr><td colSpan={4} className="text-center py-4 text-slate-400">Chưa có lệnh xuất</td></tr>
+                          )}
+                        </tbody>
+                      </Table>
+                    </TableContainer>
+                  </div>
+
                   <div>
                     <h4 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-4 flex items-center gap-2">
                       <div className="w-2 h-2 rounded-full bg-blue-500" /> Phiếu Xuất kho ({phieuXuatList.length})
@@ -452,9 +493,25 @@ export default function YeuCauDetail() {
                 <div className="mt-0.5 text-slate-500 dark:text-slate-400"><User size={18} /></div>
                 <div>
                   <div className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">Người tạo</div>
-                  <div className="mt-0.5 font-semibold text-slate-900 dark:text-white">{header.Ten_NguoiLap}</div>
+                  <div className="mt-0.5 font-semibold text-slate-900 dark:text-white">{header.TenDayDu}</div>
                 </div>
               </div>
+
+              {lenhXuatList.length > 0 && (
+                <div className="flex gap-3">
+                  <div className="mt-0.5 text-slate-500 dark:text-slate-400"><ClipboardList size={18} /></div>
+                  <div>
+                    <div className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">Số lệnh xuất vật tư</div>
+                    <div className="mt-0.5 flex flex-col gap-1">
+                      {lenhXuatList.map(lx => (
+                        <div key={lx.ID_XuatLe_LenhXuat_Map} className="font-bold text-indigo-600 dark:text-indigo-400">
+                          {lx.So_LenhXuatVT}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
             </CardBody>
           </Card>
         </motion.div>
