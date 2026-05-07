@@ -4,6 +4,15 @@ const yeuCauRepo = require('../repositories/yeuCauRepository');
 const lenhXuatRepo = require('../repositories/lenhXuatRepository');
 const { sendSuccess, sendError } = require('../utils/response');
 
+const checkPermission = async (id, req, res) => {
+  const data = await yeuCauRepo.getByID(id);
+  if (!data.header) return { error: 'Không tìm thấy yêu cầu.', status: 404 };
+  if (req.taiKhoan !== 1 && data.header.TaiKhoan_Lap !== req.taiKhoan) {
+    return { error: 'Bạn không có quyền thực hiện thao tác này.', status: 403 };
+  }
+  return { success: true, data };
+};
+
 const yeuCauController = {
   // ─── GET LIST ─────────────────────────────────────────────────────────────────
 
@@ -22,7 +31,7 @@ const yeuCauController = {
         idNhaCungCap: req.query.idNhaCungCap ? Number(req.query.idNhaCungCap) : null,
         idKeHoachSanXuat: req.query.idKeHoachSanXuat ? Number(req.query.idKeHoachSanXuat) : null,
         idDonHangSanPham: req.query.idDonHangSanPham ? Number(req.query.idDonHangSanPham) : null,
-        taiKhoan: req.taiKhoan, // Chỉ xem phiếu do mình tạo
+        taiKhoan: req.taiKhoan, // SP xử lý: Nếu ID = 1 (Admin) hoặc trùng TaiKhoan_Lap thì hiện
       };
 
       // Auto-sync all active requests from ERP before getting list
@@ -56,6 +65,11 @@ const yeuCauController = {
       let data = await yeuCauRepo.getByID(id);
       if (!data.header) return sendError(res, 'Không tìm thấy yêu cầu.', 404);
 
+      // Permission check: Admin (ID=1) or Creator
+      if (req.taiKhoan !== 1 && data.header.TaiKhoan_Lap !== req.taiKhoan) {
+        return sendError(res, 'Bạn không có quyền xem yêu cầu này.', 403);
+      }
+
       // 2. Auto-sync if status is between 3 (Đã tạo lệnh) and 6
       if (data.header.TrangThai >= 3 && data.header.TrangThai <= 6) {
         try {
@@ -86,6 +100,13 @@ const yeuCauController = {
       const id = parseInt(req.params.id, 10);
       if (!id) return sendError(res, 'ID không hợp lệ.');
 
+      // Permission check before fetching history
+      const dataYC = await yeuCauRepo.getByID(id);
+      if (!dataYC.header) return sendError(res, 'Không tìm thấy yêu cầu.', 404);
+      if (req.taiKhoan !== 1 && dataYC.header.TaiKhoan_Lap !== req.taiKhoan) {
+        return sendError(res, 'Bạn không có quyền xem lịch sử của yêu cầu này.', 403);
+      }
+
       const data = await yeuCauRepo.getHistory(id);
       return sendSuccess(res, data);
     } catch (err) {
@@ -113,6 +134,11 @@ const yeuCauController = {
       if (!Array.isArray(params.chiTiet) || params.chiTiet.length === 0)
         return sendError(res, 'chiTiet không được rỗng.');
 
+      if (params.id) {
+        const check = await checkPermission(params.id, req, res);
+        if (check.error) return sendError(res, check.error, check.status);
+      }
+
       const result = await yeuCauRepo.saveDraft(params);
       if (result?.Code !== 0) return sendError(res, result?.Message || 'Lỗi lưu Draft.');
       return sendSuccess(res, result, result.Message, params.id ? 200 : 201);
@@ -131,6 +157,9 @@ const yeuCauController = {
     try {
       const id = parseInt(req.params.id, 10);
       if (!id) return sendError(res, 'ID không hợp lệ.');
+
+      const check = await checkPermission(id, req, res);
+      if (check.error) return sendError(res, check.error, check.status);
 
       // 1. Submit (Draft -> WaitApprove)
       const resSubmit = await yeuCauRepo.submit(id, req.taiKhoan);
@@ -185,6 +214,9 @@ const yeuCauController = {
       const id = parseInt(req.params.id, 10);
       if (!id) return sendError(res, 'ID không hợp lệ.');
 
+      const check = await checkPermission(id, req, res);
+      if (check.error) return sendError(res, check.error, check.status);
+
       const result = await yeuCauRepo.cancel(id, req.body?.lyDo, req.taiKhoan);
       if (result?.Code !== 0) return sendError(res, result?.Message || 'Lỗi huỷ yêu cầu.');
       return sendSuccess(res, result, result.Message);
@@ -203,6 +235,9 @@ const yeuCauController = {
     try {
       const id = parseInt(req.params.id, 10);
       if (!id) return sendError(res, 'ID không hợp lệ.');
+
+      const check = await checkPermission(id, req, res);
+      if (check.error) return sendError(res, check.error, check.status);
 
       const result = await yeuCauRepo.close(id, req.taiKhoan);
       if (result?.Code !== 0) return sendError(res, result?.Message || 'Lỗi đóng yêu cầu.');
@@ -229,6 +264,9 @@ const yeuCauController = {
       if (!Array.isArray(chiTiet) || chiTiet.length === 0) {
         return sendError(res, 'chiTiet không được rỗng.');
       }
+
+      const check = await checkPermission(id, req, res);
+      if (check.error) return sendError(res, check.error, check.status);
 
       const result = await yeuCauRepo.nhapLai(id, idKhoNhap, chiTiet, ghiChu, req.taiKhoan);
       if (result?.Code !== 0) return sendError(res, result?.Message || 'Lỗi nhập lại vật tư.');
