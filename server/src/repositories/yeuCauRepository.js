@@ -59,6 +59,35 @@ const yeuCauRepository = {
     return result.recordset;
   },
 
+  /**
+   * Lấy danh sách lệnh xuất vật tư từ ERP để chọn.
+   * SP: usp_XuatLe_ERP_GetLenhXuatVT_List
+   */
+  async getERPLenhXuatList(params = {}) {
+    const pool = getPool();
+    const req = pool.request();
+
+    req.input('Keyword', sql.NVarChar(100), params.keyword || null);
+    req.input('TuNgay', sql.Date, params.tuNgay || null);
+    req.input('DenNgay', sql.Date, params.denNgay || null);
+
+    const result = await req.execute('dbo.usp_XuatLe_ERP_GetLenhXuatVT_List');
+    return result.recordset;
+  },
+
+  /**
+   * Lấy chi tiết vật tư từ lệnh xuất ERP.
+   * SP: usp_XuatLe_ERP_GetLenhXuatVT_Detail
+   */
+  async getERPLenhXuatDetail(idLenhXuatVT) {
+    const pool = getPool();
+    const req = pool.request();
+    req.input('ID_LenhXuatVT', sql.Int, idLenhXuatVT);
+
+    const result = await req.execute('dbo.usp_XuatLe_ERP_GetLenhXuatVT_Detail');
+    return result.recordset;
+  },
+
   // ─── WRITE ───────────────────────────────────────────────────────────────────
 
   /**
@@ -79,6 +108,7 @@ const yeuCauRepository = {
     req.input('Ngay_YeuCau', sql.Date, params.ngayYeuCau);
     req.input('Ngay_DuKienXuat', sql.Date, params.ngayDuKienXuat || null);
     req.input('Deadline_HoanThanh', sql.Date, params.deadlineHoanThanh || null);
+    req.input('ID_LenhXuatVT', sql.Int, params.idLenhXuatVT || null);
     req.input('GhiChu', sql.NVarChar(1000), params.ghiChu || null);
     req.input('ChiTietJson', sql.NVarChar(sql.MAX), JSON.stringify(params.chiTiet || []));
     req.input('TaiKhoan', sql.SmallInt, params.taiKhoan);
@@ -162,6 +192,24 @@ const yeuCauRepository = {
     req.input('TaiKhoan', sql.SmallInt, taiKhoan);
 
     const result = await req.execute('dbo.usp_XuatLe_YeuCau_NhapLai');
+    return result.recordset[0];
+  },
+
+  /**
+   * Lập phiếu xuất kho trên Web và tự động đồng bộ sang ERP.
+   * SP: usp_XuatLe_YeuCau_XuatKho
+   */
+  async xuatKho(id, idKhoXuat, idPhieuNhapBTP_Source, chiTiet, ghiChu, taiKhoan) {
+    const pool = getPool();
+    const req = pool.request();
+    req.input('ID_XuatLe_YeuCau', sql.BigInt, id);
+    req.input('ID_KhoXuat', sql.SmallInt, idKhoXuat);
+    req.input('ID_PhieuNhapBTP_Source', sql.Int, idPhieuNhapBTP_Source || null);
+    req.input('ChiTietJson', sql.NVarChar(sql.MAX), JSON.stringify(chiTiet || []));
+    req.input('GhiChu', sql.NVarChar(1000), ghiChu || null);
+    req.input('TaiKhoan', sql.SmallInt, taiKhoan);
+
+    const result = await req.execute('dbo.usp_XuatLe_YeuCau_XuatKho');
     return result.recordset[0];
   },
 

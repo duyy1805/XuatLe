@@ -34,15 +34,15 @@ const yeuCauController = {
         taiKhoan: req.taiKhoan, // SP xử lý: Nếu ID = 1 (Admin) hoặc trùng TaiKhoan_Lap thì hiện
       };
 
-      // Auto-sync all active requests from ERP before getting list
-      try {
-        await Promise.all([
-          lenhXuatRepo.syncPhieuXuat(null),
-          lenhXuatRepo.syncPhieuNhap(null)
-        ]);
-      } catch (syncErr) {
-        console.error('Global auto-sync failed:', syncErr);
-      }
+      // Auto-sync disabled in integrated workflow to prevent deadlocks
+      // try {
+      //   await Promise.all([
+      //     lenhXuatRepo.syncPhieuXuat(null),
+      //     lenhXuatRepo.syncPhieuNhap(null)
+      //   ]);
+      // } catch (syncErr) {
+      //   console.error('Global auto-sync failed:', syncErr);
+      // }
 
       const data = await yeuCauRepo.getList(params);
       return sendSuccess(res, data);
@@ -70,19 +70,19 @@ const yeuCauController = {
         return sendError(res, 'Bạn không có quyền xem yêu cầu này.', 403);
       }
 
-      // 2. Auto-sync if status is between 3 (Đã tạo lệnh) and 6
-      if (data.header.TrangThai >= 3 && data.header.TrangThai <= 6) {
-        try {
-          await Promise.all([
-            lenhXuatRepo.syncPhieuXuat(id),
-            lenhXuatRepo.syncPhieuNhap(id)
-          ]);
-          // Fetch again to get updated counts
-          data = await yeuCauRepo.getByID(id);
-        } catch (syncErr) {
-          console.error(`Auto-sync for YC ${id} failed:`, syncErr);
-        }
-      }
+      // Auto-sync disabled in integrated workflow to prevent deadlocks
+      // if (data.header.TrangThai >= 3 && data.header.TrangThai <= 6) {
+      //   try {
+      //     await Promise.all([
+      //       lenhXuatRepo.syncPhieuXuat(id),
+      //       lenhXuatRepo.syncPhieuNhap(id)
+      //     ]);
+      //     // Fetch again to get updated counts
+      //     data = await yeuCauRepo.getByID(id);
+      //   } catch (syncErr) {
+      //     console.error(`Auto-sync for YC ${id} failed:`, syncErr);
+      //   }
+      // }
 
       return sendSuccess(res, data);
     } catch (err) {
@@ -108,6 +108,39 @@ const yeuCauController = {
       }
 
       const data = await yeuCauRepo.getHistory(id);
+      return sendSuccess(res, data);
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  /**
+   * GET /api/yeu-cau/erp/lenh-xuat
+   * Lấy danh sách lệnh xuất vật tư từ ERP.
+   */
+  async getERPLenhXuatList(req, res, next) {
+    try {
+      const params = {
+        keyword: req.query.keyword,
+        tuNgay: req.query.tuNgay,
+        denNgay: req.query.denNgay,
+      };
+      const data = await yeuCauRepo.getERPLenhXuatList(params);
+      return sendSuccess(res, data);
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  /**
+   * GET /api/yeu-cau/erp/lenh-xuat/:id/detail
+   * Lấy chi tiết vật tư từ lệnh xuất ERP.
+   */
+  async getERPLenhXuatDetail(req, res, next) {
+    try {
+      const id = parseInt(req.params.id, 10);
+      if (!id) return sendError(res, 'ID Lệnh xuất không hợp lệ.');
+      const data = await yeuCauRepo.getERPLenhXuatDetail(id);
       return sendSuccess(res, data);
     } catch (err) {
       next(err);
@@ -169,6 +202,17 @@ const yeuCauController = {
       // We skip the manual approval step as requested by the user.
       const resApprove = await yeuCauRepo.approve(id, true, 'Xác nhận tự động (Bỏ qua bước phê duyệt)', req.taiKhoan);
       if (resApprove?.Code !== 0) return sendError(res, resApprove?.Message || 'Lỗi xác nhận tự động.');
+
+      // 3. If integrated ERP flow (already has ID_LenhXuatVT), move to state 3 (Đã tạo lệnh ERP)
+      const dataYC = await yeuCauRepo.getByID(id);
+      if (dataYC.header?.ID_LenhXuatVT) {
+        const pool = require('../config/db').getPool();
+        await pool.request()
+          .input('id', require('../config/db').sql.BigInt, id)
+          .query('UPDATE dbo.XuatLe_YeuCau SET TrangThai = 3 WHERE ID_XuatLe_YeuCau = @id');
+
+        if (resApprove) resApprove.NewStatus = 3;
+      }
 
       return sendSuccess(res, resApprove, 'Xác nhận yêu cầu thành công.');
     } catch (err) {
@@ -270,6 +314,32 @@ const yeuCauController = {
 
       const result = await yeuCauRepo.nhapLai(id, idKhoNhap, chiTiet, ghiChu, req.taiKhoan);
       if (result?.Code !== 0) return sendError(res, result?.Message || 'Lỗi nhập lại vật tư.');
+      return sendSuccess(res, result, result.Message);
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  /**
+   * POST /api/yeu-cau/:id/xuat-kho
+   * Lập phiếu xuất kho và đồng bộ ERP.
+   */
+  async xuatKho(req, res, next) {
+    try {
+      const id = parseInt(req.params.id, 10);
+      if (!id) return sendError(res, 'ID không hợp lệ.');
+
+      const { idKhoXuat, idPhieuNhapBTP_Source, chiTiet, ghiChu } = req.body;
+      if (!idKhoXuat) return sendError(res, 'Vui lòng chọn Kho xuất.');
+      if (!Array.isArray(chiTiet) || chiTiet.length === 0) {
+        return sendError(res, 'chiTiet không được rỗng.');
+      }
+
+      const check = await checkPermission(id, req, res);
+      if (check.error) return sendError(res, check.error, check.status);
+
+      const result = await yeuCauRepo.xuatKho(id, idKhoXuat, idPhieuNhapBTP_Source, chiTiet, ghiChu, req.taiKhoan);
+      if (result?.Code !== 0) return sendError(res, result?.Message || 'Lỗi lập phiếu xuất kho.');
       return sendSuccess(res, result, result.Message);
     } catch (err) {
       next(err);

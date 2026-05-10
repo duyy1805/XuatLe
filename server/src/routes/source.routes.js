@@ -15,4 +15,7 @@ router.get('/vat-tu-phoi', sourceCtrl.getVatTuPhoi);
 // GET /api/source/da-mo-phoi →  Đã mở phôi theo kế hoạch
 router.get('/da-mo-phoi', sourceCtrl.getDaMoPhoi);
 
+// GET /api/source/phieu-nhap-btp →  Danh sách Phiếu nhập BTP
+router.get('/phieu-nhap-btp', sourceCtrl.getPhieuNhapBTP);
+
 module.exports = router;

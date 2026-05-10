@@ -15,12 +15,12 @@ import { useAuth } from '../contexts/AuthContext';
 
 const STATUS_MAP = {
   0: { label: 'Nháp', variant: 'neutral' },
-  1: { label: 'Đang chờ duyệt', variant: 'warning' },
-  2: { label: 'Chờ tạo lệnh ERP', variant: 'info' },
-  3: { label: 'Đã tạo lệnh ERP', variant: 'primary' },
+  1: { label: 'Chờ duyệt', variant: 'warning' },
+  2: { label: 'Chờ liên kết ERP', variant: 'info' },
+  3: { label: 'Sẵn sàng xuất kho', variant: 'primary' },
   4: { label: 'Đang xuất kho', variant: 'primary' },
-  5: { label: 'Đã xuất đủ', variant: 'primary' },
-  6: { label: 'Đang nhập lại', variant: 'primary' },
+  5: { label: 'Đã xuất đủ', variant: 'success' },
+  6: { label: 'Đang nhập lại', variant: 'warning' },
   7: { label: 'Hoàn thành', variant: 'success' },
   8: { label: 'Quá hạn', variant: 'danger' },
   9: { label: 'Đã hủy', variant: 'danger' }
@@ -155,9 +155,9 @@ export default function YeuCauList() {
               >
                 <option value="">Tất cả</option>
                 <option value="0">Nháp</option>
-                <option value="1">Đang chờ duyệt</option>
-                <option value="2">Chờ tạo lệnh ERP</option>
-                <option value="3">Đã tạo lệnh ERP</option>
+                <option value="1">Chờ duyệt</option>
+                <option value="2">Chờ liên kết ERP</option>
+                <option value="3">Sẵn sàng xuất kho</option>
                 <option value="4">Đang xuất kho</option>
                 <option value="5">Đã xuất đủ</option>
                 <option value="6">Đang nhập lại</option>

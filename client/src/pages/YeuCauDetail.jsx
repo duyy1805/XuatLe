@@ -13,16 +13,17 @@ import { useAuth } from '../contexts/AuthContext';
 import yeuCauApi from '../api/yeuCauApi';
 import { format } from 'date-fns';
 import ModalNhapLai from './ModalNhapLai';
+import ModalXuatKho from './ModalXuatKho';
 import { Modal } from '../components/ui/Modal';
 
 const STATUS_MAP = {
   0: { label: 'Nháp', variant: 'neutral' },
-  1: { label: 'Đang chờ duyệt', variant: 'warning' },
-  2: { label: 'Chờ tạo lệnh ERP', variant: 'info' },
-  3: { label: 'Đã tạo lệnh ERP', variant: 'primary' },
+  1: { label: 'Chờ duyệt', variant: 'warning' },
+  2: { label: 'Chờ liên kết ERP', variant: 'info' },
+  3: { label: 'Sẵn sàng xuất kho', variant: 'primary' },
   4: { label: 'Đang xuất kho', variant: 'primary' },
-  5: { label: 'Đã xuất đủ', variant: 'primary' },
-  6: { label: 'Đang nhập lại', variant: 'primary' },
+  5: { label: 'Đã xuất đủ', variant: 'success' },
+  6: { label: 'Đang nhập lại', variant: 'warning' },
   7: { label: 'Hoàn thành', variant: 'success' },
   8: { label: 'Quá hạn', variant: 'danger' },
   9: { label: 'Đã hủy', variant: 'danger' }
@@ -60,6 +61,8 @@ export default function YeuCauDetail() {
   const [lenhXuatList, setLenhXuatList] = useState([]);
   const [phieuXuatList, setPhieuXuatList] = useState([]);
   const [phieuNhapList, setPhieuNhapList] = useState([]);
+  const [isXuatKhoModalOpen, setIsXuatKhoModalOpen] = useState(false);
+  const [xuatKhoLoading, setXuatKhoLoading] = useState(false);
   const [receiptsLoading, setReceiptsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('summary'); // 'summary' | 'receipts'
 
@@ -172,6 +175,23 @@ export default function YeuCauDetail() {
     }
   };
 
+  const handleXuatKhoSubmit = async (idKhoXuat, payload, ghiChu) => {
+    try {
+      setXuatKhoLoading(true);
+      const res = await yeuCauApi.xuatKho(id, { idKhoXuat, chiTiet: payload, ghiChu });
+      if (res.success) {
+        toast.success('Lập phiếu xuất kho thành công!');
+        setIsXuatKhoModalOpen(false);
+        fetchDetail();
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error('Lỗi khi thực hiện lập phiếu xuất');
+    } finally {
+      setXuatKhoLoading(false);
+    }
+  };
+
   const handleViewReceiptItems = async (type, receipt) => {
     try {
       setReceiptItemsModal({ isOpen: true, type, data: receipt, items: [] });
@@ -267,9 +287,15 @@ export default function YeuCauDetail() {
             </Button>
           )}
 
-          {isCreator && header.TrangThai === 2 && (
+          {isCreator && header.TrangThai === 2 && !header.ID_LenhXuatVT && (
             <Button variant="primary" onClick={() => handleAction('createLenh', 'Tạo lệnh xuất ERP')} isLoading={actionLoading}>
               <Box size={16} /> Tạo Lệnh ERP
+            </Button>
+          )}
+          
+          {isCreator && (header.TrangThai === 3 || (header.TrangThai === 2 && header.ID_LenhXuatVT)) && (
+            <Button variant="primary" onClick={() => setIsXuatKhoModalOpen(true)}>
+              <Box size={16} /> Lập phiếu xuất kho
             </Button>
           )}
 
@@ -319,6 +345,7 @@ export default function YeuCauDetail() {
                       <tr>
                         <th>Lệnh SX</th>
                         <th>Mã VT</th>
+                        <th>Nguồn BTP</th>
                         <th className="text-right">Đề nghị</th>
                         <th className="text-right">Đã xuất</th>
                         <th className="text-right">Đã nhập</th>
@@ -335,7 +362,21 @@ export default function YeuCauDetail() {
                         >
                           <td className="font-medium text-blue-600">{vt.So_LenhSanXuat || '-'}</td>
                           <td className="font-semibold">{vt.Ma_VatTu}</td>
-                          <td className="text-right">{vt.SoLuong_DeNghi_Xuat}</td>
+                          <td>
+                            {vt.So_PhieuNhapBTP_Source ? (
+                              <div className="flex flex-col">
+                                <span className="font-medium text-blue-600 text-xs">{vt.So_PhieuNhapBTP_Source}</span>
+                                {vt.Ngay_NhapBTP_Source && (
+                                  <span className="text-[10px] text-slate-500">
+                                    {format(new Date(vt.Ngay_NhapBTP_Source), 'dd/MM/yyyy')}
+                                  </span>
+                                )}
+                              </div>
+                            ) : (
+                              <span className="text-slate-400 text-xs">-</span>
+                            )}
+                          </td>
+                          <td className="text-right font-semibold">{vt.SoLuong_DeNghi_Xuat}</td>
                           <td className="text-right font-medium text-blue-600">{vt.SoLuong_DaXuat}</td>
                           <td className="text-right font-medium text-emerald-600">{vt.SoLuong_DaNhap}</td>
                           <td className="text-right text-red-600">{vt.SoLuong_HaoHut}</td>
@@ -645,6 +686,14 @@ export default function YeuCauDetail() {
         data={chiTiet}
         onSubmit={handleNhapLaiSubmit}
         loading={nhapLaiLoading}
+      />
+
+      <ModalXuatKho
+        isOpen={isXuatKhoModalOpen}
+        onClose={() => setIsXuatKhoModalOpen(false)}
+        data={chiTiet}
+        onSubmit={handleXuatKhoSubmit}
+        loading={xuatKhoLoading}
       />
     </motion.div>
   );

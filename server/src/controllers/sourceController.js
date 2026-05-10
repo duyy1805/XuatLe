@@ -66,6 +66,18 @@ const sourceController = {
       next(err);
     }
   },
+
+  /**
+   * GET /api/source/phieu-nhap-btp
+   */
+  async getPhieuNhapBTP(req, res, next) {
+    try {
+      const data = await sourceRepo.getPhieuNhapBTPList();
+      return sendSuccess(res, data);
+    } catch (err) {
+      next(err);
+    }
+  },
 };
 
 module.exports = sourceController;

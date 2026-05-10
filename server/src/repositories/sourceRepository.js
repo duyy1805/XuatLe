@@ -75,6 +75,15 @@ const sourceRepository = {
     `;
     const result = await req.query(query);
     return result.recordset;
+  },
+
+  /**
+   * Lấy danh sách phiếu nhập BTP chi tiết.
+   */
+  async getPhieuNhapBTPList() {
+    const pool = getPool();
+    const result = await pool.request().execute('dbo.usp_XuatLe_Source_GetPhieuNhapBTP_List');
+    return result.recordset;
   }
 };
 

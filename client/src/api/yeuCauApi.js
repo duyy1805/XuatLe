@@ -10,6 +10,12 @@ const yeuCauApi = {
   getHistory: (id) => {
     return axiosClient.get(`/yeu-cau/${id}/history`);
   },
+  getERPLenhXuat: (params) => {
+    return axiosClient.get('/yeu-cau/erp/lenh-xuat', { params });
+  },
+  getERPLenhXuatDetail: (id) => {
+    return axiosClient.get(`/yeu-cau/erp/lenh-xuat/${id}/detail`);
+  },
   saveDraft: (data) => {
     if (data.id) {
       return axiosClient.put(`/yeu-cau/draft/${data.id}`, data);
@@ -53,6 +59,9 @@ const yeuCauApi = {
   },
   syncPhieuXuat: (id) => {
     return axiosClient.post(`/yeu-cau/${id}/sync-xuat`);
+  },
+  xuatKho: (id, data) => {
+    return axiosClient.post(`/yeu-cau/${id}/xuat-kho`, data);
   },
   getPhieuNhap: (id) => {
     return axiosClient.get(`/yeu-cau/${id}/phieu-nhap`);

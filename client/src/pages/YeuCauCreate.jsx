@@ -2,23 +2,24 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardBody, CardHeader, CardTitle } from '../components/ui/Card';
-import { Input, Select } from '../components/ui/Input';
+import { Input } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
 import { Table, TableContainer } from '../components/ui/Table';
-import { Save, ArrowLeft, PackagePlus, Plus, Trash2, CheckCircle } from 'lucide-react';
+import { Save, ArrowLeft, PackagePlus, Trash2, CheckCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import sourceApi from '../api/sourceApi';
 import dmApi from '../api/dmApi';
 import yeuCauApi from '../api/yeuCauApi';
 
-const createEmptyRow = () => ({
-  __rowId: crypto.randomUUID(),
-  ID_KeHoachSanXuat: '',
-  ID_DonHang_SanPham: null,
-  SoLuong_DeNghi_Xuat: 0,
-  GhiChu_ChiTiet: ''
-});
+// const createEmptyRow = () => ({
+//   __rowId: crypto.randomUUID(),
+//   ID_VatTu: null,
+//   ID_DonHang_VatTu: null,
+//   idPhieuNhapBTP_Source: null,
+//   SoLuong_DeNghi_Xuat: 0,
+//   GhiChu_ChiTiet: ''
+// });
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -148,17 +149,18 @@ function SearchableSelect({
 export default function YeuCauCreate() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
-  const [dsKeHoach, setDsKeHoach] = useState([]);
+  const [dsLenhXuat, setDsLenhXuat] = useState([]);
+  const [dsPhieuNhapBTP, setDsPhieuNhapBTP] = useState([]);
   const [dsCongDoan, setDsCongDoan] = useState([]);
   const [dsBoPhan, setDsBoPhan] = useState([]);
   const [dsVatTu, setDsVatTu] = useState([]);
-  const [dsVatTuPhoi, setDsVatTuPhoi] = useState([]);
 
 
   const [formData, setFormData] = useState({
     idCongDoanLe: '',
     idBoPhanNguon: '3',
     idBoPhanNhan: '',
+    idLenhXuatVT: '',
     ngayYeuCau: new Date().toISOString().slice(0, 10),
     ngayDuKienXuat: '',
     deadlineHoanThanh: '',
@@ -167,13 +169,13 @@ export default function YeuCauCreate() {
 
   useEffect(() => {
     Promise.all([
-      sourceApi.getKeHoach({}),
-      sourceApi.getVatTuPhoi(), // Fetch Phoi list
+      yeuCauApi.getERPLenhXuat({}),
+      sourceApi.getPhieuNhapBTP({}).catch(() => ({ success: true, data: [] })), // Graceful fallback
       dmApi.getCongDoanLe({}),
       dmApi.getBoPhan({})
-    ]).then(([resKh, resVt, resCd, resBp]) => {
-      if (resKh.success) setDsKeHoach(resKh.data);
-      if (resVt.success) setDsVatTuPhoi(resVt.data);
+    ]).then(([resLx, resPhieu, resCd, resBp]) => {
+      if (resLx.success) setDsLenhXuat(resLx.data);
+      if (resPhieu?.success) setDsPhieuNhapBTP(resPhieu.data);
       if (resCd.success) setDsCongDoan(resCd.data);
       if (resBp.success) setDsBoPhan(resBp.data);
     }).catch(() => {
@@ -181,15 +183,20 @@ export default function YeuCauCreate() {
     });
   }, []);
 
-  const getKeHoachLabel = useCallback((kh) => {
+  const getLenhXuatLabel = useCallback((lx) => {
     return [
-      kh.So_LenhSanXuat,
-      kh.Ten_SanPham,
-      kh.Ten_QuyTrinhSanXuat,
-      `KH#${kh.ID_KeHoachSanXuat}`
-    ]
-      .filter(Boolean)
-      .join(' - ');
+      lx.So_LenhXuatVT,
+      lx.Ten_BoPhan,
+      lx.Ten_KhoXuat
+    ].filter(Boolean).join(' - ');
+  }, []);
+
+  const getPhieuNhapLabel = useCallback((p) => {
+    return [
+      p.So_PhieuNhapBTP,
+      p.Ten_SanPham,
+      `(Còn: ${p.SoLuong_ConLai ?? p.SoLuong_NhapKho})`
+    ].filter(Boolean).join(' - ');
   }, []);
 
   const getBoPhanLabel = useCallback((bp) => {
@@ -200,78 +207,79 @@ export default function YeuCauCreate() {
     return [cd.Ma_CongDoanLe, cd.Ten_CongDoanLe].filter(Boolean).join(' - ');
   }, []);
 
-  const getVatTuLabel = useCallback((vt) => {
-    return [vt.Ma_VatTu, vt.Ten_VatTu].filter(Boolean).join(' - ');
-  }, []);
-
-  const handleAddRow = useCallback(() => {
-    setDsVatTu(prev => [...prev, createEmptyRow()]);
-  }, []);
-
-  const handleKeHoachChange = useCallback(async (index, selectedKh) => {
-    let daMoMap = {};
-    if (selectedKh) {
-      try {
-        const res = await sourceApi.getDaMoPhoi(selectedKh.ID_KeHoachSanXuat, selectedKh.ID_DonHang_SanPham);
-        if (res?.data) {
-          daMoMap = res.data.reduce((acc, curr) => {
-            acc[curr.ID_VatTu_Xuat] = curr.SoLuong_DaMo;
-            return acc;
-          }, {});
-        }
-      } catch (e) {
-        console.error(e);
+  const handleLenhXuatChange = useCallback(async (lx) => {
+    setFormData(prev => ({ ...prev, idLenhXuatVT: lx.ID_LenhXuatVT, idNhaCungCap: lx.ID_NhaCungCap }));
+    try {
+      setLoading(true);
+      const res = await yeuCauApi.getERPLenhXuatDetail(lx.ID_LenhXuatVT);
+      if (res.success) {
+        setDsVatTu(res.data.map(vt => ({
+          __rowId: crypto.randomUUID(),
+          ID_VatTu: vt.ID_VatTu,
+          ID_DonHang_VatTu: vt.ID_DonHang_VatTu,
+          Ma_VatTu: vt.Ma_VatTu,
+          Ten_VatTu: vt.Ten_VatTu,
+          ID_DonViTinh: vt.ID_DonViTinh,
+          Ten_DonViTinh: vt.Ten_DonViTinh,
+          SoLuong_DeNghi: vt.SoLuong_DeNghi || 0,
+          idPhieuNhapBTP_Source: null,
+          SoLuong_DeNghi_Xuat: vt.SoLuong_DeNghi || 0,
+          GhiChu_ChiTiet: ''
+        })));
+        toast.success(`Đã tải ${res.data.length} vật tư từ lệnh xuất.`);
       }
+    } catch (e) {
+      toast.error('Lỗi lấy chi tiết lệnh xuất');
+    } finally {
+      setLoading(false);
     }
-
-    setDsVatTu(prev => prev.map((row, rowIndex) => (
-      rowIndex === index
-        ? {
-          ...createEmptyRow(),
-          __rowId: row.__rowId,
-          ID_KeHoachSanXuat: selectedKh.ID_KeHoachSanXuat,
-          ID_LenhSanXuat: selectedKh.ID_LenhSanXuat,
-          ID_DonHang: selectedKh.ID_DonHang,
-          ID_DonHang_SanPham: selectedKh.ID_DonHang_SanPham,
-          ID_DonHang_LoSanXuat: selectedKh.ID_DonHang_LoSanXuat || null,
-          Ma_VatTu_SP: selectedKh.ItemCode,
-          Ten_VatTu_SP: selectedKh.Ten_SanPham,
-          Ten_SanPham: selectedKh.Ten_SanPham,
-          Ten_QuyTrinhSanXuat: selectedKh.Ten_QuyTrinhSanXuat,
-          Ten_BoPhan: selectedKh.Ten_BoPhan,
-          So_LenhSanXuat: selectedKh.So_LenhSanXuat,
-          SoLuong_KeHoach: selectedKh.SoLuong_KeHoach_CT || 0,
-          SoLuongConLai: selectedKh.SoLuong_KeHoach_CT || 0, // start with full plan qty
-          DaMoMap: daMoMap
-        }
-        : row
-    )));
   }, []);
 
-  const handleVatTuChange = useCallback((index, selectedVt) => {
-    setDsVatTu(prev => prev.map((row, rowIndex) => {
-      if (rowIndex !== index) return row;
-      const daMo = (row.DaMoMap && selectedVt) ? (row.DaMoMap[selectedVt.ID_VatTu] || 0) : 0;
-      const conLai = row.SoLuong_KeHoach - daMo;
-      return {
-        ...row,
-        ...selectedVt,
-        ID_DonHang_VatTu: 0, // Phoi materials don't belong to a specific plan's material list, use 0 as default
-        SoLuong_KeHoach: row.SoLuong_KeHoach, // Giữ lại số lượng của kế hoạch
-        SoLuongConLai: conLai, // Tính toán lại số lượng còn lại dựa trên vật tư đã xuất
-        SoLuong_DeNghi_Xuat: conLai > 0 ? conLai : 0,
-        GhiChu_ChiTiet: row.GhiChu_ChiTiet || ''
-      };
-    }));
+  const handlePhieuNhapRowChange = useCallback((index, phieu) => {
+    setDsVatTu(prev => {
+      const newVatTu = [...prev];
+      if (phieu) {
+        newVatTu[index].idPhieuNhapBTP_Source = phieu.ID_PhieuNhapBTP;
+        newVatTu[index].idDonHang_Source = phieu.ID_DonHang;
+        newVatTu[index].idDonHangSanPham_Source = phieu.ID_DonHang_SanPham;
+        newVatTu[index].idDonHangLoSanXuat_Source = phieu.ID_DonHang_LoSanXuat;
+        const slConLai = phieu.SoLuong_ConLai ?? phieu.SoLuong_NhapKho ?? 0;
+        const slErp = newVatTu[index].SoLuong_DeNghi || 0;
+        // Lấy tối đa theo lệnh xuất, nhưng không vượt quá số lượng còn lại của phiếu nhập
+        newVatTu[index].SoLuong_DeNghi_Xuat = Math.min(slErp, slConLai);
+      } else {
+        newVatTu[index].idPhieuNhapBTP_Source = null;
+        newVatTu[index].idDonHang_Source = null;
+        newVatTu[index].idDonHangSanPham_Source = null;
+        newVatTu[index].idDonHangLoSanXuat_Source = null;
+        newVatTu[index].SoLuong_DeNghi_Xuat = newVatTu[index].SoLuong_DeNghi || 0;
+      }
+      return newVatTu;
+    });
   }, []);
 
   const handleSoLuongChange = useCallback((index, value) => {
     setDsVatTu(prev => {
       const newVatTu = [...prev];
-      newVatTu[index].SoLuong_DeNghi_Xuat = Number(value);
+      const row = newVatTu[index];
+      const numValue = Number(value);
+
+      const slErp = row.SoLuong_DeNghi || 0;
+      const phieu = dsPhieuNhapBTP.find(p => p.ID_PhieuNhapBTP === row.idPhieuNhapBTP_Source);
+      const slBtp = phieu ? (phieu.SoLuong_ConLai ?? phieu.SoLuong_NhapKho ?? 0) : Infinity;
+
+      const maxAllow = Math.min(slErp, slBtp);
+
+      if (numValue > maxAllow) {
+        toast.warning(`Số lượng không được vượt quá ${maxAllow}`);
+        row.SoLuong_DeNghi_Xuat = maxAllow;
+      } else {
+        row.SoLuong_DeNghi_Xuat = numValue;
+      }
+
       return newVatTu;
     });
-  }, []);
+  }, [dsPhieuNhapBTP]);
 
   const handleRemoveVatTu = useCallback((index) => {
     setDsVatTu(prev => {
@@ -307,24 +315,38 @@ export default function YeuCauCreate() {
     try {
       setLoading(true);
       const payload = {
+        idLenhXuatVT: formData.idLenhXuatVT,
+        idCongDoanLe: formData.idCongDoanLe,
         ...formData,
         chiTiet: chiTietToSave.map((vt, idx) => ({
           idDong: idx + 1,
-          idKeHoachSanXuat: vt.ID_KeHoachSanXuat,
           idLenhSanXuat: vt.ID_LenhSanXuat,
+          idKeHoachSanXuat: vt.ID_KeHoachSanXuat,
           idDonHang: vt.ID_DonHang,
-          idDonHangSanPham: vt.ID_DonHang_SanPham,
-          idDonHangLoSanXuat: vt.ID_DonHang_LoSanXuat,
           idDonHangVatTu: vt.ID_DonHang_VatTu,
           idVatTuXuat: vt.ID_VatTu,
           idVatTuNhap: vt.ID_VatTu,
           idDonViTinh: vt.ID_DonViTinh,
-          soLuongKeHoach: vt.SoLuong_KeHoach,
+          idPhieuNhapBTPSource: vt.idPhieuNhapBTP_Source,
+          // idDonHang: vt.idDonHang_Source,
+          idDonHangSanPham: vt.idDonHangSanPham_Source,
+          idDonHangLoSanXuat: vt.idDonHangLoSanXuat_Source,
+          soLuongKeHoach: vt.SoLuong_DeNghi,
           soLuongDeNghiXuat: vt.SoLuong_DeNghi_Xuat,
           donGiaTamTinh: 0,
           ghiChu: vt.GhiChu_ChiTiet
         }))
       };
+
+      console.log('DEBUG - Payload Header:', { ...payload, chiTiet: undefined });
+      console.table(payload.chiTiet.map(c => ({
+        'Mã VT': c.idVatTuXuat,
+        'SL': c.soLuongDeNghiXuat,
+        'BTP': c.idPhieuNhapBTPSource,
+        'ĐH': c.idDonHang,
+        'LSX': c.idDonHangLoSanXuat,
+        'SP': c.idDonHangSanPham
+      })));
 
       const res = await yeuCauApi.saveDraft(payload);
       if (res.success) {
@@ -384,6 +406,19 @@ export default function YeuCauCreate() {
             </CardHeader>
             <CardBody>
               <div className="grid grid-cols-1 gap-5 lg:grid-cols-6">
+                <SearchableSelect
+                  label="Lệnh xuất vật tư ERP (*)"
+                  value={formData.idLenhXuatVT}
+                  options={dsLenhXuat}
+                  getValue={lx => lx.ID_LenhXuatVT}
+                  getLabel={getLenhXuatLabel}
+                  placeholder="Nhập để tìm lệnh xuất..."
+                  onChange={handleLenhXuatChange}
+                  wrapperClass="lg:col-span-3"
+                />
+
+
+
                 <SearchableSelect
                   label="Công đoạn lẻ (*)"
                   value={formData.idCongDoanLe}
@@ -446,12 +481,9 @@ export default function YeuCauCreate() {
           <Card className="flex flex-col">
             <CardHeader className="flex flex-row items-center justify-between gap-4 border-b pb-4 dark:border-white/10">
               <div>
-                <CardTitle>Danh sách vật tư đề nghị xuất</CardTitle>
-                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Thêm từng dòng, chọn kế hoạch rồi chọn vật tư tương ứng trong kế hoạch đó.</p>
+                <CardTitle>Danh sách vật tư xuất</CardTitle>
+                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Danh sách sẽ tự động hiển thị sau khi bạn chọn Lệnh xuất vật tư ERP.</p>
               </div>
-              <Button onClick={handleAddRow} className="mb-1 shrink-0">
-                <Plus size={16} /> Thêm dòng
-              </Button>
             </CardHeader>
             <CardBody className="flex flex-1 flex-col overflow-hidden p-0">
               <TableContainer className="h-full max-h-[600px] overflow-y-auto rounded-none border-0">
@@ -459,13 +491,14 @@ export default function YeuCauCreate() {
                   <thead>
                     <tr>
                       <th className="w-8 border-b bg-slate-50 dark:border-white/10 dark:bg-slate-950"></th>
-                      <th className="min-w-[200px] border-b bg-slate-50">Kế hoạch</th>
-                      <th className="min-w-[180px] border-b bg-slate-50">Sản phẩm</th>
-                      <th className="min-w-[150px] border-b bg-slate-50">Lên plan</th>
-                      <th className="min-w-[220px] border-b bg-slate-50">Vật tư</th>
-                      <th className="border-b bg-slate-50 text-right">SL kế hoạch</th>
-                      <th className="border-b bg-slate-50 text-right">Còn lại</th>
-                      <th style={{ width: 120 }} className="border-b bg-slate-50 text-right">Đề nghị</th>
+                      <th className="min-w-[150px] border-b bg-slate-50">Mã vật tư</th>
+                      <th className="min-w-[250px] border-b bg-slate-50">Tên vật tư</th>
+                      <th className="min-w-[100px] border-b bg-slate-50">ĐVT</th>
+                      <th className="min-w-[250px] border-b bg-slate-50">Phiếu nhập BTP</th>
+                      <th className="border-b bg-slate-50 text-right">SL BTP</th>
+                      <th className="border-b bg-slate-50 text-right">SL ERP</th>
+                      <th className="border-b bg-slate-50 text-right">SL Đã xuất</th>
+                      <th style={{ width: 140 }} className="border-b bg-slate-50 text-right">SL Xuất</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -474,15 +507,12 @@ export default function YeuCauCreate() {
                         <td colSpan="6">
                           <div className="flex flex-col items-center justify-center py-20 text-slate-500 dark:text-slate-400">
                             <PackagePlus size={48} className="mb-4 opacity-20" />
-                            <p>Chưa có dòng vật tư nào. Nhấn “Thêm dòng” để bắt đầu.</p>
+                            <p>Chưa có dữ liệu. Vui lòng chọn Lệnh xuất ở trên.</p>
                           </div>
                         </td>
                       </tr>
                     ) : (
                       dsVatTu.map((vt, index) => {
-                        const rowVatTuOptions = dsVatTuPhoi || [];
-                        const isLoadingRow = false;
-
                         return (
                           <motion.tr
                             key={vt.__rowId}
@@ -499,47 +529,50 @@ export default function YeuCauCreate() {
                                 <Trash2 size={16} />
                               </button>
                             </td>
-                            <td>
+                            <td className="text-sm font-medium">{vt.Ma_VatTu || '-'}</td>
+                            <td className="text-sm text-slate-900 dark:text-white line-clamp-2" title={vt.Ten_VatTu}>
+                              {vt.Ten_VatTu || '-'}
+                            </td>
+                            <td className="text-sm text-slate-500">{vt.Ten_DonViTinh || '-'}</td>
+                            <td className="p-2">
                               <SearchableSelect
-                                value={vt.ID_KeHoachSanXuat}
-                                options={dsKeHoach}
-                                getValue={kh => kh.ID_KeHoachSanXuat}
-                                getLabel={getKeHoachLabel}
-                                placeholder="Lọc kế hoạch..."
-                                onChange={(kh) => handleKeHoachChange(index, kh)}
+                                value={`${vt.idPhieuNhapBTP_Source}-${vt.idDonHang_Source}-${vt.idDonHangLoSanXuat_Source}-${vt.idDonHangSanPham_Source}`}
+                                options={dsPhieuNhapBTP}
+                                getValue={p => `${p.ID_PhieuNhapBTP}-${p.ID_DonHang}-${p.ID_DonHang_LoSanXuat}-${p.ID_DonHang_SanPham}`}
+                                getLabel={getPhieuNhapLabel}
+                                placeholder="Chọn BTP..."
+                                onChange={(phieu) => handlePhieuNhapRowChange(index, phieu)}
+                                className="h-8 text-xs"
                               />
                             </td>
-                            <td className="text-sm">
-                              <div className="font-medium text-slate-900 dark:text-white line-clamp-2" title={vt.Ten_SanPham}>
-                                {vt.Ten_SanPham || '-'}
-                              </div>
+                            <td className="text-right text-sm font-medium text-emerald-600">
+                              {vt.idPhieuNhapBTP_Source ? (
+                                dsPhieuNhapBTP.find(p =>
+                                  p.ID_PhieuNhapBTP === vt.idPhieuNhapBTP_Source &&
+                                  p.ID_DonHang === vt.idDonHang_Source &&
+                                  p.ID_DonHang_LoSanXuat === vt.idDonHangLoSanXuat_Source &&
+                                  p.ID_DonHang_SanPham === vt.idDonHangSanPham_Source
+                                )?.SoLuong_ConLai ?? '-'
+                              ) : '-'}
                             </td>
-                            <td className="text-sm text-slate-500">
-                              <div className="line-clamp-2" title={vt.Ten_QuyTrinhSanXuat}>
-                                {vt.Ten_QuyTrinhSanXuat || '-'}
-                              </div>
+                            <td className="text-right text-sm text-slate-500">{vt.SoLuong_DeNghi ?? '-'}</td>
+                            <td className="text-right text-sm text-slate-400 italic">
+                              {vt.idPhieuNhapBTP_Source ? (
+                                dsPhieuNhapBTP.find(p =>
+                                  p.ID_PhieuNhapBTP === vt.idPhieuNhapBTP_Source &&
+                                  p.ID_DonHang === vt.idDonHang_Source &&
+                                  p.ID_DonHang_LoSanXuat === vt.idDonHangLoSanXuat_Source &&
+                                  p.ID_DonHang_SanPham === vt.idDonHangSanPham_Source
+                                )?.TongSL_DaXuat ?? 0
+                              ) : 0}
                             </td>
-                            <td>
-                              <SearchableSelect
-                                value={vt.ID_VatTu}
-                                options={rowVatTuOptions}
-                                getValue={item => item.ID_VatTu}
-                                getLabel={getVatTuLabel}
-                                placeholder={isLoadingRow ? 'Đang tải vật tư...' : 'Nhập để lọc vật tư...'}
-                                disabled={!vt.ID_KeHoachSanXuat || isLoadingRow}
-                                onChange={(item) => handleVatTuChange(index, item)}
-                              />
-                            </td>
-                            <td className="text-right">{vt.SoLuong_KeHoach || '-'}</td>
-                            <td className="text-right font-medium text-emerald-600">{vt.SoLuongConLai ?? '-'}</td>
                             <td className="p-2 text-right">
                               <Input
                                 type="number"
                                 min="0"
                                 value={vt.SoLuong_DeNghi_Xuat}
                                 onChange={(e) => handleSoLuongChange(index, e.target.value)}
-                                className="h-8 px-2 py-1 text-right"
-                                disabled={!vt.ID_VatTu}
+                                className="h-8 px-2 py-1 text-right font-medium text-blue-700"
                               />
                             </td>
                           </motion.tr>

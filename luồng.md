@@ -1,266 +1,74 @@
-# MÔ TẢ CHI TIẾT NGHIỆP VỤ MODULE XUẤT LẺ CÔNG ĐOẠN NGOÀI
+# MÔ TẢ CHI TIẾT NGHIỆP VỤ MODULE XUẤT LẺ CÔNG ĐOẠN NGOÀI (CẬP NHẬT)
 
 ## 1. Bối cảnh nghiệp vụ
 
-Trong quy trình sản xuất thực tế tại nhà máy, một số công đoạn không được thực hiện nội bộ mà phải thuê ngoài (outsourcing), ví dụ: in, thêu, xử lý bề mặt, gia công đặc biệt. Khi đó, bán thành phẩm (BTP) sẽ được xuất khỏi kho để chuyển đến đơn vị gia công, sau đó nhận lại để tiếp tục sản xuất.
+Trong quy trình sản xuất, các công đoạn gia công ngoài (outsourcing) yêu cầu xuất vật tư/bán thành phẩm từ kho nhà máy sang đơn vị gia công và nhận lại sau khi hoàn tất. 
 
-Hệ thống cần quản lý toàn bộ vòng đời của quá trình này nhằm đảm bảo kiểm soát vật tư, tiến độ và hao hụt.
+Quy trình mới tập trung vào việc **vận hành trực tiếp trên phần mềm QLCĐCL** và **tự động đồng bộ hai chiều với ERP** để đảm bảo tính chính xác, truy xuất nguồn gốc và giảm thiểu nhập liệu thủ công.
 
 ---
 
 ## 2. Mục tiêu hệ thống
 
-* Quản lý yêu cầu xuất lẻ vật tư/bán thành phẩm ra ngoài
-* Theo dõi trạng thái xử lý từ lúc tạo yêu cầu đến khi hoàn thành
-* Đồng bộ dữ liệu với hệ thống ERP (xuất kho, nhập kho)
-* Kiểm soát số lượng xuất – nhập – hao hụt
-* Cho phép đối soát và phát hiện sai lệch
+*   **Tận dụng dữ liệu ERP:** Lấy thông tin từ Lệnh xuất vật tư đã có trên ERP.
+*   **Vận hành tập trung:** Thủ kho và SXBT thao tác chính trên phần mềm QLCĐCL.
+*   **Truy xuất nguồn gốc:** Kết nối thông tin phiếu xuất với đích danh phiếu nhập BTP nguồn.
+*   **Đồng bộ tức thời:** Tự động sinh phiếu tương ứng trên ERP ngay khi thao tác trên Web thành công.
 
 ---
 
 ## 3. Thành phần dữ liệu chính
 
 ### 3.1 Dữ liệu nguồn từ ERP
+*   **Lệnh xuất vật tư** (`LenhXuatVT`): Chứa thông tin chung về việc xuất kho.
+*   **Chi tiết vật tư lệnh xuất** (`LenhXuatVT_VatTu`): Danh sách vật tư và số lượng cần xuất.
+*   **Phiếu nhập BTP** (`PhieuNhapBTP`): Dùng để chọn nguồn gốc cho vật tư khi xuất kho (Traceability).
 
-* Kế hoạch sản xuất (KeHoachSanXuat)
-* Lệnh sản xuất (LenhSanXuat)
-* Đơn hàng (DonHang)
-* Sản phẩm trong đơn hàng (DonHang_SanPham)
-* Vật tư theo đơn hàng (DonHang_VatTu)
-
-=> Đây là dữ liệu đầu vào để xác định nhu cầu xuất lẻ
-
----
-
-### 3.2 Danh mục công đoạn lẻ
-
-Bảng: DM_CongDoanLe
-
-Mỗi công đoạn có cấu hình:
-
-* Loại đối tác (nội bộ / nhà cung cấp)
-* Có xuất kho hay không
-* Có nhập lại hay không
-* Có cho phép hao hụt hay không
-* Tỷ lệ hao hụt tối đa
+### 3.2 Dữ liệu tại QLCĐCL
+*   **Yêu cầu xuất lẻ** (`XuatLe_YeuCau`): Lưu vết lệnh xuất và trạng thái thực hiện.
+*   **Bảng Map dữ liệu:** Liên kết ID giữa hai hệ thống (`XuatLe_PhieuXuat_Map`, `XuatLe_PhieuNhap_Map`).
 
 ---
 
-### 3.3 Yêu cầu xuất lẻ (trung tâm hệ thống)
+## 4. Luồng xử lý nghiệp vụ thực tế
 
-Bảng:
+### Bước 1: Khởi tạo yêu cầu (Từ Lệnh ERP)
+Người dùng tạo yêu cầu trên Web bằng cách **chọn một Lệnh xuất vật tư (LXVT)** đã có trên ERP.
+*   Hệ thống tự động tải danh sách vật tư từ ERP sang.
+*   Người dùng bổ sung thông tin: Công đoạn lẻ, Nhà cung cấp, Deadline.
+*   **Trạng thái:** `2 - Chờ tạo lệnh ERP` (Tự động chuyển sang trạng thái này vì lệnh đã có sẵn trên ERP).
 
-* XuatLe_YeuCau (header)
-* XuatLe_YeuCau_ChiTiet (detail)
+### Bước 2: Thủ kho thực hiện Xuất kho
+Thủ kho mở yêu cầu trên Web và tiến hành lập phiếu xuất.
+*   **Tính năng đặc biệt:** Cho phép chọn đích danh **Phiếu nhập BTP** nào để xuất (phục vụ truy xuất).
+*   Khi bấm "Lưu phiếu", hệ thống thực hiện:
+    1.  Lưu thông tin vào QLCĐCL.
+    2.  **Tự động gọi API/Proc đẩy sang ERP** để sinh ra một Phiếu xuất kho (`PhieuXuatVT`) tương ứng.
+*   **Trạng thái:** `4 - Đang xuất kho` hoặc `5 - Đã xuất đủ`.
 
-Mỗi yêu cầu gồm:
-
-* Thông tin kế hoạch, đơn hàng, công đoạn
-* Nhà cung cấp (nếu gia công ngoài)
-* Ngày yêu cầu, ngày dự kiến xuất, deadline
-* Danh sách vật tư và số lượng đề nghị xuất
-
----
-
-## 4. Luồng xử lý nghiệp vụ
-
-### Bước 1: Lấy dữ liệu nguồn
-
-Người dùng chọn:
-
-* Kế hoạch sản xuất
-* Sản phẩm
-* Công đoạn lẻ
-
-Hệ thống tự động:
-
-* Lấy danh sách vật tư liên quan
-* Hiển thị số lượng kế hoạch
+### Bước 3: SXBT ghi nhận hoàn thành (Nhập kho)
+Sau khi gia công xong, nhân viên SXBT thực hiện nhập lại hàng ngay trên giao diện Web.
+*   Bấm nút **"Nhập kho"** và điền số lượng thực tế nhận về.
+*   Hệ thống thực hiện:
+    1.  Lưu thông tin vào QLCĐCL.
+    2.  **Tự động đẩy thông tin về ERP** để sinh ra một Phiếu nhập kho (`PhieuNhapVT`) hoàn chỉnh.
+*   **Trạng thái:** `6 - Đang nhập lại` hoặc `7 - Hoàn thành`.
 
 ---
 
-### Bước 2: Tạo yêu cầu xuất lẻ (Draft)
+## 5. Cơ chế đồng bộ và Kiểm soát
 
-Người dùng nhập:
+### 5.1 Đồng bộ hai chiều (Bi-directional Sync)
+*   **Chiều ERP -> Web:** Lấy thông tin lệnh xuất ban đầu.
+*   **Chiều Web -> ERP:** Tự động sinh phiếu Xuất/Nhập ngay khi thao tác trên Web để số liệu kho luôn khớp.
 
-* Nhà cung cấp
-* Số lượng đề nghị xuất
-* Deadline
-* Ghi chú
-
-Hệ thống gọi:
-
-* usp_XuatLe_YeuCau_SaveDraft_Json
-
-Trạng thái:
-
-* DRAFT (nháp)
+### 5.2 Truy xuất nguồn gốc (Traceability)
+Việc chọn phiếu nhập BTP nguồn khi xuất giúp hệ thống biết chính xác lô hàng nào đã được mang đi gia công, từ đó đồng bộ dữ liệu báo cáo sau khi in.
 
 ---
 
-### Bước 3: Gửi duyệt (Submit)
-
-Người dùng submit yêu cầu
-
-Hệ thống:
-
-* Kiểm tra dữ liệu hợp lệ
-* Chuyển trạng thái sang WAIT_APPROVE
-
----
-
-### Bước 4: Phê duyệt (Approve)
-
-Người có thẩm quyền:
-
-* Duyệt hoặc từ chối
-
-Nếu duyệt:
-
-* Trạng thái → APPROVED
-
----
-
-### Bước 5: Tạo lệnh xuất vật tư
-
-Hệ thống tạo lệnh xuất trong ERP thông qua:
-
-* usp_XuatLe_CreateLenhXuatVT
-
-Sinh:
-
-* LenhXuatVT
-
-Trạng thái:
-
-* Đã tạo lệnh xuất
-
----
-
-### Bước 6: Xuất kho (ERP)
-
-ERP thực hiện:
-
-* Tạo Phiếu xuất vật tư (PhieuXuatVT)
-
-Hệ thống:
-
-* Sync về qua usp_XuatLe_Sync_PhieuXuat
-
-Trạng thái:
-
-* Đã xuất kho
-
----
-
-### Bước 7: Nhập lại sau gia công
-
-Sau khi gia công xong:
-
-* ERP tạo Phiếu nhập (PhieuNhapVT)
-
-Hệ thống:
-
-* Sync qua usp_XuatLe_Sync_PhieuNhap
-
-Trạng thái:
-
-* Đã nhập kho
-
----
-
-### Bước 8: Đối soát
-
-Hệ thống tính toán:
-
-* Tổng xuất
-* Tổng nhập
-* Hao hụt = Xuất - Nhập
-
-Kiểm tra:
-
-* Hao hụt có vượt tỷ lệ cho phép không
-
-Kết quả:
-
-* Nếu hợp lệ → COMPLETED
-* Nếu lệch → CHENH_LECH
-
----
-
-## 5. Đặc điểm nghiệp vụ quan trọng
-
-### 5.1 Xuất nhiều lần
-
-Một yêu cầu có thể được xuất nhiều đợt:
-
-* Mỗi đợt tương ứng một phiếu xuất
-
----
-
-### 5.2 Nhập nhiều lần
-
-Có thể nhập lại nhiều lần:
-
-* Phù hợp với thực tế gia công chia lô
-
----
-
-### 5.3 Hao hụt vật tư
-
-Hệ thống cho phép:
-
-* Khai báo hao hụt
-* Giới hạn theo tỷ lệ cấu hình
-
----
-
-### 5.4 Đối soát tự động
-
-So sánh:
-
-* Tổng xuất vs tổng nhập
-
-Phát hiện:
-
-* Thiếu hàng
-* Dư hàng
-* Sai lệch bất thường
-
----
-
-## 6. Trạng thái vòng đời
-
-* 0: Nháp
-* 1: Chờ duyệt
-* 2: Đã duyệt
-* 3: Đã tạo lệnh xuất
-* 4: Đã xuất kho
-* 5: Đã nhập kho
-* 6: Nhập một phần
-* 7: Xuất một phần
-* 8: Chênh lệch
-* 9: Hoàn thành
-* 10: Hủy
-
----
-
-## 7. Giá trị mang lại
-
-* Kiểm soát chặt chẽ vật tư khi gia công ngoài
-* Giảm thất thoát và sai lệch
-* Theo dõi tiến độ theo từng công đoạn
-* Tích hợp chặt với ERP
-* Hỗ trợ audit và truy vết lịch sử
-
----
-
-## 8. Tổng kết
-
-Module này đóng vai trò cầu nối giữa:
-
-* kế hoạch sản xuất nội bộ
-* hoạt động gia công bên ngoài
-* và hệ thống ERP
-
-Toàn bộ quy trình được kiểm soát xuyên suốt từ lúc xuất vật tư cho đến khi nhập lại và đối soát hoàn tất.
+## 6. Tổng kết lợi ích
+
+1.  **Dữ liệu chính xác:** Không còn tình trạng lệch số liệu giữa hai hệ thống do nhập liệu hai lần.
+2.  **Thao tác nhanh:** Thủ kho không cần chuyển đổi giữa nhiều phần mềm.
+3.  **Quản lý trực quan:** Bộ phận SXBT theo dõi được tiến độ nhập/xuất của từng công đoạn lẻ ngay trên một giao diện duy nhất.

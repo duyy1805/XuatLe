@@ -16,6 +16,9 @@ const sourceApi = {
     return axiosClient.get('/source/da-mo-phoi', {
       params: { idKeHoachSanXuat, idDonHangSanPham }
     });
+  },
+  getPhieuNhapBTP: (params) => {
+    return axiosClient.get('/source/phieu-nhap-btp', { params });
   }
 };
 

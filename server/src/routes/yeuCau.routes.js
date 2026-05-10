@@ -7,6 +7,8 @@ const doiSoatCtrl = require('../controllers/doiSoatController');
 
 // ─── Danh sách và Chi tiết ────────────────────────────────────────────────────
 router.get('/', yeuCauCtrl.getList);
+router.get('/erp/lenh-xuat', yeuCauCtrl.getERPLenhXuatList);      // Danh sách lệnh ERP
+router.get('/erp/lenh-xuat/:id/detail', yeuCauCtrl.getERPLenhXuatDetail); // Chi tiết vật tư ERP
 router.get('/:id', yeuCauCtrl.getByID);
 router.get('/:id/history', yeuCauCtrl.getHistory);
 
@@ -27,6 +29,7 @@ router.delete('/:id/lenh-xuat/:idLenh', lenhXuatCtrl.unlinkLenhXuat);
 // ─── Phiếu xuất (theo yêu cầu) ───────────────────────────────────────────────
 router.get('/:id/phieu-xuat', lenhXuatCtrl.getPhieuXuat);
 router.get('/phieu-xuat/:idPhieu', lenhXuatCtrl.getPhieuXuatDetail);
+router.post('/:id/xuat-kho', yeuCauCtrl.xuatKho);            // Xuất kho và Sync ERP (MỚI)
 router.post('/:id/sync-xuat', lenhXuatCtrl.syncPhieuXuat);
 
 // ─── Phiếu nhập (theo yêu cầu) ───────────────────────────────────────────────
