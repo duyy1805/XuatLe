@@ -203,14 +203,12 @@ const yeuCauController = {
       const resApprove = await yeuCauRepo.approve(id, true, 'Xác nhận tự động (Bỏ qua bước phê duyệt)', req.taiKhoan);
       if (resApprove?.Code !== 0) return sendError(res, resApprove?.Message || 'Lỗi xác nhận tự động.');
 
-      // 3. If integrated ERP flow (already has ID_LenhXuatVT), move to state 3 (Đã tạo lệnh ERP)
+      // 3. Nếu là luồng liên kết ERP sẵn (đã có ID_LenhXuatVT), chuyển trạng thái sang 3 và đồng bộ Map
       const dataYC = await yeuCauRepo.getByID(id);
       if (dataYC.header?.ID_LenhXuatVT) {
-        const pool = require('../config/db').getPool();
-        await pool.request()
-          .input('id', require('../config/db').sql.BigInt, id)
-          .query('UPDATE dbo.XuatLe_YeuCau SET TrangThai = 3 WHERE ID_XuatLe_YeuCau = @id');
-
+        const idLenh = dataYC.header.ID_LenhXuatVT;
+        await yeuCauRepo.syncLenhXuatMap(id, idLenh, req.taiKhoan);
+        
         if (resApprove) resApprove.NewStatus = 3;
       }
 

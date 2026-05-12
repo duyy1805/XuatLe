@@ -226,6 +226,20 @@ const yeuCauRepository = {
     const result = await req.execute('dbo.usp_XuatLe_GetItemReceiptHistory');
     return result.recordset;
   },
+
+  /**
+   * Đồng bộ Map và cập nhật trạng thái khi liên kết ERP sẵn.
+   */
+  async syncLenhXuatMap(id, idLenhXuatVT, taiKhoan) {
+    const pool = getPool();
+    const req = pool.request();
+    req.input('ID_XuatLe_YeuCau', sql.BigInt, id);
+    req.input('ID_LenhXuatVT', sql.Int, idLenhXuatVT);
+    req.input('TaiKhoan', sql.SmallInt, taiKhoan);
+
+    const result = await req.execute('dbo.usp_XuatLe_YeuCau_SyncLenhXuatMap');
+    return result.recordset[0];
+  },
 };
 
 module.exports = yeuCauRepository;

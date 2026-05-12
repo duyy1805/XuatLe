@@ -5,7 +5,7 @@ import { Table, TableContainer } from '../components/ui/Table';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
 import { Skeleton } from '../components/ui/Skeleton';
-import { ArrowLeft, CheckCircle, Box, Calendar, User, ClipboardList } from 'lucide-react';
+import { ArrowLeft, CheckCircle, Box, Calendar, User, ClipboardList, ArrowUpRight, ArrowDownLeft } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { useConfirm } from '../hooks/useConfirm';
@@ -97,6 +97,7 @@ export default function YeuCauDetail() {
       const res = await yeuCauApi.getById(id);
       if (res.success) {
         setData(res.data);
+        console.log(res.data);
         fetchReceipts();
       }
     } catch (error) {
@@ -292,7 +293,7 @@ export default function YeuCauDetail() {
               <Box size={16} /> Tạo Lệnh ERP
             </Button>
           )}
-          
+
           {isCreator && (header.TrangThai === 3 || (header.TrangThai === 2 && header.ID_LenhXuatVT)) && (
             <Button variant="primary" onClick={() => setIsXuatKhoModalOpen(true)}>
               <Box size={16} /> Lập phiếu xuất kho
@@ -343,13 +344,13 @@ export default function YeuCauDetail() {
                   <Table>
                     <thead>
                       <tr>
-                        <th>Lệnh SX</th>
-                        <th>Mã VT</th>
+                        <th>Vật tư / Quy cách</th>
                         <th>Nguồn BTP</th>
                         <th className="text-right">Đề nghị</th>
                         <th className="text-right">Đã xuất</th>
                         <th className="text-right">Đã nhập</th>
                         <th className="text-right">Hao hụt</th>
+                        <th className="text-right">Đang treo</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -360,8 +361,10 @@ export default function YeuCauDetail() {
                           className="cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
                           title="Nhấn để xem chi tiết lịch sử nhập xuất của vật tư này"
                         >
-                          <td className="font-medium text-blue-600">{vt.So_LenhSanXuat || '-'}</td>
-                          <td className="font-semibold">{vt.Ma_VatTu}</td>
+                          <td>
+                            <div className="font-bold text-slate-900 dark:text-white">{vt.Ma_VatTu}</div>
+                            <div className="text-xs text-slate-500 truncate max-w-[200px]" title={vt.Ten_VatTu}>{vt.Ten_VatTu}</div>
+                          </td>
                           <td>
                             {vt.So_PhieuNhapBTP_Source ? (
                               <div className="flex flex-col">
@@ -380,6 +383,7 @@ export default function YeuCauDetail() {
                           <td className="text-right font-medium text-blue-600">{vt.SoLuong_DaXuat}</td>
                           <td className="text-right font-medium text-emerald-600">{vt.SoLuong_DaNhap}</td>
                           <td className="text-right text-red-600">{vt.SoLuong_HaoHut}</td>
+                          <td className="text-right font-bold text-orange-600">{vt.SoLuong_DangTreo}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -538,21 +542,14 @@ export default function YeuCauDetail() {
                 </div>
               </div>
 
-              {lenhXuatList.length > 0 && (
-                <div className="flex gap-3">
-                  <div className="mt-0.5 text-slate-500 dark:text-slate-400"><ClipboardList size={18} /></div>
-                  <div>
-                    <div className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">Số lệnh xuất vật tư</div>
-                    <div className="mt-0.5 flex flex-col gap-1">
-                      {lenhXuatList.map(lx => (
-                        <div key={lx.ID_XuatLe_LenhXuat_Map} className="font-bold text-indigo-600 dark:text-indigo-400">
-                          {lx.So_LenhXuatVT}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
+              <div className="flex gap-3">
+                <div className="mt-0.5 text-slate-500 dark:text-slate-400"><User size={18} /></div>
+                <div>
+                  <div className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">Lệnh xuất vật tư</div>
+                  <div className="mt-0.5 font-semibold text-slate-900 dark:text-white">{header.So_LenhXuatVT}</div>
                 </div>
-              )}
+              </div>
+
             </CardBody>
           </Card>
         </motion.div>
@@ -634,7 +631,6 @@ export default function YeuCauDetail() {
         <div className="space-y-4">
           <div className="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-lg border border-slate-100 dark:border-white/5">
             <p className="text-sm font-semibold text-slate-900 dark:text-white">{itemHistoryModal.item?.Ten_VatTu}</p>
-            <p className="text-xs text-slate-500 mt-1">Lệnh SX: {itemHistoryModal.item?.So_LenhSanXuat || '-'}</p>
           </div>
 
           <TableContainer>
@@ -642,22 +638,24 @@ export default function YeuCauDetail() {
               <thead>
                 <tr>
                   <th>Loại</th>
-                  <th>Số phiếu ERP</th>
+                  <th>Chứng từ / Phiếu</th>
                   <th>Ngày</th>
                   <th className="text-right">Số lượng</th>
                   <th>Kho</th>
+                  <th>Ghi chú</th>
                 </tr>
               </thead>
               <tbody>
                 {itemHistoryLoading ? (
-                  <tr><td colSpan={5} className="text-center py-8">Đang tải lịch sử...</td></tr>
+                  <tr><td colSpan={6} className="text-center py-8">Đang tải lịch sử...</td></tr>
                 ) : itemHistoryModal.history.length === 0 ? (
-                  <tr><td colSpan={5} className="text-center py-8 text-slate-400">Chưa có lịch sử giao nhận cho vật tư này</td></tr>
+                  <tr><td colSpan={6} className="text-center py-8 text-slate-400">Chưa có lịch sử giao nhận cho vật tư này</td></tr>
                 ) : (
                   itemHistoryModal.history.map((h, idx) => (
                     <tr key={idx}>
                       <td>
-                        <Badge variant={h.Loai === 'XUAT' ? 'primary' : 'success'}>
+                        <Badge variant={h.Loai === 'XUAT' ? 'primary' : 'success'} className="flex items-center gap-1 w-fit">
+                          {h.Loai === 'XUAT' ? <ArrowUpRight size={12} /> : <ArrowDownLeft size={12} />}
                           {h.Loai === 'XUAT' ? 'XUẤT' : 'NHẬP'}
                         </Badge>
                       </td>
@@ -665,6 +663,7 @@ export default function YeuCauDetail() {
                       <td>{h.Ngay ? format(new Date(h.Ngay), 'dd/MM/yyyy HH:mm') : '-'}</td>
                       <td className="text-right font-bold">{h.SoLuong}</td>
                       <td>{h.TenKho}</td>
+                      <td className="text-xs text-slate-500 italic">{h.GhiChu || '-'}</td>
                     </tr>
                   ))
                 )}
